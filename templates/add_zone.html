@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Zone</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="header">
+    <h1>Add Zone</h1>
+  </div>
+
+  <div class="page-container">
+    <a class="back-link" href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
+
+    <div class="form-card">
+      <h3>Add New Zone</h3>
+      <form method="POST">
+        <div class="form-row">
+          <div>
+            <label for="zone_name">Zone Name</label>
+            <input type="text" name="zone_name" id="zone_name" required>
+          </div>
+          <div>
+            <button type="submit">➕ Add</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="table-card">
+      <h3>All Zones</h3>
+      <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search by zone name...">
+      <table>
+        <thead>
+          <tr>
+            <th>Zone Name</th>
+          </tr>
+        </thead>
+        <tbody id="zoneTable">
+          {% for row in zones %}
+          <tr><td>{{ row }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const rows = document.querySelectorAll('#zoneTable tr');
+    searchInput.addEventListener('input', function () {
+      const value = this.value.toLowerCase();
+      rows.forEach(row => {
+        const zone = row.children[0].textContent.toLowerCase();
+        row.style.display = zone.includes(value) ? '' : 'none';
+      });
+    });
+  </script>
+</body>
+</html>

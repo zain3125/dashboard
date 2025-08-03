@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="header">
+        <h1>Al Bayan Co.</h1>
+        <img src="{{ url_for('static', filename='al-bayan-logo.png') }}" alt="Al Bayan Logo" />
+    </header>
+
+    <main class="container">
+        <h2 class="title">Dashboard</h2>
+        <p class="subtitle">Manage your business data and operations</p>
+
+        <div class="grid">
+            <a href="{{ url_for('transactions') }}" class="card calendar">
+                <h3>Transaction Reports</h3>
+                <p>View and export transaction data by date range</p>
+            </a>
+
+            <a href="{{ url_for('data_entry') }}" class="card add">
+                <h3>Data Entry</h3>
+                <p>Add new records and manage data entries</p>
+            </a>
+
+            <a href="{{ url_for('dimension_tables') }}" class="card db">
+                <h3>Dimension Tables</h3>
+                <p>Manage suppliers, zones, and reference data</p>
+            </a>
+
+            <a href="#" class="card chart">
+                <h3>Analytics</h3>
+                <p>View insights and performance metrics</p>
+            </a>
+
+            <a href="#" class="card gear">
+                <h3>Settings</h3>
+                <p>Configure system preferences and options</p>
+            </a>
+        </div>
+    </main>
+
+</body>
+</html>

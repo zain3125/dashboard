@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Factory</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="header">
+    <h1>Add Factory</h1>
+  </div>
+
+  <div class="page-container">
+    <a class="back-link" href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
+
+    <!-- Form to Add New Factory -->
+    <div class="form-card">
+      <h3>Add New Factory</h3>
+      <form method="POST">
+        <div class="form-row">
+          <div>
+            <label for="factory_name">Factory Name</label>
+            <input type="text" name="factory_name" id="factory_name" required>
+          </div>
+          <div>
+            <button type="submit">➕ Add</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Table of All Factories -->
+    <div class="table-card">
+      <h3>All Factories</h3>
+      <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search by factory name...">
+
+      <table>
+        <thead>
+          <tr>
+            <th>Factory Name</th>
+          </tr>
+        </thead>
+        <tbody id="factoryTable">
+          {% for row in factories %}
+          <tr>
+            <td>{{ row }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const rows = document.querySelectorAll('#factoryTable tr');
+
+    searchInput.addEventListener('input', function () {
+      const value = this.value.toLowerCase();
+      rows.forEach(row => {
+        const name = row.children[0].textContent.toLowerCase();
+        row.style.display = name.includes(value) ? '' : 'none';
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Transaction Reports</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="center-wrapper">
+    <div class="report-box">
+
+        <a class="back-link" href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
+
+        <h2 class="title">Transaction Reports</h2>
+        <p class="subtitle">Filter and export transaction data</p>
+
+        <div class="card-section">
+        <h3>Date Range Filter</h3>
+        <div class="flex-row">
+            <div>
+            <label for="start-date">Start Date</label>
+            <input type="date" id="start-date" name="start_date">
+            </div>
+            <div>
+            <label for="end-date">End Date</label>
+            <input type="date" id="end-date" name="end_date">
+            </div>
+            <div>
+            <button class="filter-btn">🔍 Filter</button>
+            </div>
+            <div>
+            <button class="export-btn">⬇️ Export Excel</button>
+            </div>
+        </div>
+        </div>
+
+        <div class="card-section">
+        <h3>Transactions</h3>
+        <p class="subtitle">No transactions found for the selected date range.</p>
+        </div>
+
+    </div>
+    </div>
+
+</body>
+</html>

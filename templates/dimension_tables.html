@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dimension Tables</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="header">
+        <h1>Al Bayan Co.</h1>
+        <img src="{{ url_for('static', filename='al-bayan-logo.png') }}" alt="Al Bayan Logo" />
+    </header>
+
+    <main class="container">
+        <a href="/dashboard" class="text-blue-600 hover:underline">&larr; Back to Dashboard</a>
+        <h2 class="title">Dimension Tables</h2>
+        <p class="subtitle">Manage your reference data</p>
+
+        <div class="grid">
+            <a href="{{ url_for('add_truck_owner') }}" class="card db">
+                <h3>Add Truck Owner</h3>
+                <p>Insert or manage truck owners</p>
+            </a>
+            <a href="{{ url_for('add_supplier') }}" class="card db">
+                <h3>Add Supplier</h3>
+                <p>Insert or manage suppliers</p>
+            </a>
+            <a href="{{ url_for('add_factory') }}" class="card db">
+                <h3>Add Factory</h3>
+                <p>Insert or manage factories</p>
+            </a>
+            <a href="{{ url_for('add_zone') }}" class="card db">
+                <h3>Add Zone</h3>
+                <p>Insert or manage zones</p>
+            </a>
+            <a href="{{ url_for('add_representative') }}" class="card db">
+                <h3>Add Representative</h3>
+                <p>Insert or manage representatives</p>
+            </a>
+        </div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Entry</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 text-gray-800">
+    <div class="max-w-7xl mx-auto p-6">
+        <a href="/dashboard" class="text-blue-600 hover:underline">&larr; Back to Dashboard</a>
+        <h1 class="text-3xl font-bold mt-4">Data Entry</h1>
+        <p class="text-gray-600">Add new records to the database</p>
+
+        <div class="bg-white p-6 mt-6 rounded shadow">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">Transaction Data Entry</h2>
+                <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">+ Add Row</button>
+            </div>
+<div class="overflow-auto mt-6">
+    <table class="min-w-full text-sm text-left">
+        <thead class="bg-gray-100 border-b">
+            <tr>
+                <th class="p-2">Date*</th>
+                <th class="p-2">Truck Number*</th>
+                <th class="p-2">Truck Owner</th>
+                <th class="p-2">Supplier*</th>
+                <th class="p-2">Factory*</th>
+                <th class="p-2">Zone*</th>
+                <th class="p-2">Weight*</th>
+                <th class="p-2">Ohda*</th>
+                <th class="p-2">Factory Price*</th>
+                <th class="p-2">Sell Price*</th>
+                <th class="p-2">Representative*</th>
+                <th class="p-2">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="border-b">
+                <!-- Date -->
+                <td class="p-2"><input type="date" class="border rounded px-2 py-1 w-full"></td>
+
+                <!-- Truck Number -->
+                <td class="p-2">
+                    <select id="truck_num" class="border rounded px-2 py-1 w-full">
+                        <option>Select Truck</option>
+                        <!-- Fill with trucks from DB -->
+                        <option value="TRK001">TRK001</option>
+                        <option value="TRK002">TRK002</option>
+                    </select>
+                </td>
+
+                <!-- Truck Owner (auto-filled) -->
+                <td class="p-2">
+                    <input type="text" id="truck_owner" class="border rounded px-2 py-1 w-full bg-gray-100" placeholder="Owner Name" readonly>
+                </td>
+
+                <!-- Supplier -->
+                <td class="p-2">
+                    <select class="border rounded px-2 py-1 w-full">
+                        <option>Select Supplier</option>
+                    </select>
+                </td>
+
+                <!-- Factory -->
+                <td class="p-2">
+                    <select class="border rounded px-2 py-1 w-full">
+                        <option>Select Factory</option>
+                    </select>
+                </td>
+
+                <!-- Zone -->
+                <td class="p-2">
+                    <select class="border rounded px-2 py-1 w-full">
+                        <option>Select Zone</option>
+                    </select>
+                </td>
+
+                <!-- Weight -->
+                <td class="p-2">
+                    <input type="number" class="border rounded px-2 py-1 w-full" placeholder="Weight">
+                </td>
+
+                <!-- Ohda -->
+                <td class="p-2">
+                    <input type="number" class="border rounded px-2 py-1 w-full" placeholder="Ohda">
+                </td>
+
+                <!-- Factory Price -->
+                <td class="p-2">
+                    <input type="number" class="border rounded px-2 py-1 w-full" placeholder="Factory Price">
+                </td>
+
+                <!-- Sell Price -->
+                <td class="p-2">
+                    <input type="number" class="border rounded px-2 py-1 w-full" placeholder="Sell Price">
+                </td>
+
+                <!-- Representative -->
+                <td class="p-2">
+                    <select class="border rounded px-2 py-1 w-full">
+                        <option>Select Representative</option>
+                    </select>
+                </td>
+
+                <!-- Actions -->
+                <td class="p-2 text-center">
+                    <button class="text-red-500 hover:text-red-700">🗑</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+            <div class="flex justify-end gap-2 mt-4">
+                <button class="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded">Clear All</button>
+                <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">💾 Save All Entries</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

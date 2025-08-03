@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Representative</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="header">
+    <h1>Add Representative</h1>
+  </div>
+
+  <div class="page-container">
+    <a class="back-link" href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
+
+    <div class="form-card">
+      <h3>Add New Representative</h3>
+      <form method="POST">
+        <div class="form-row">
+          <div>
+            <label for="rep_name">Representative Name</label>
+            <input type="text" name="rep_name" id="rep_name" required>
+          </div>
+          <div>
+            <label for="rep_phone">Phone Number</label>
+            <input type="text" name="rep_phone" id="rep_phone" required>
+          </div>
+          <div>
+            <button type="submit">➕ Add</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="table-card">
+      <h3>All Representatives</h3>
+      <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search by name or phone...">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Phone</th>
+          </tr>
+        </thead>
+        <tbody id="repTable">
+          {% for row in representatives %}
+          <tr>
+            <td>{{ row.name }}</td>
+            <td>{{ row.phone }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const rows = document.querySelectorAll('#repTable tr');
+    searchInput.addEventListener('input', function () {
+      const value = this.value.toLowerCase();
+      rows.forEach(row => {
+        const name = row.children[0].textContent.toLowerCase();
+        const phone = row.children[1].textContent.toLowerCase();
+        row.style.display = (name.includes(value) || phone.includes(value)) ? '' : 'none';
+      });
+    });
+  </script>
+</body>
+</html>

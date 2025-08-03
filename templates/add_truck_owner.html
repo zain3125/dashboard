@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Truck Owner</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="header">
+    <h1>Add Truck Owner</h1>
+  </div>
+  <div class="page-container">
+    <a class="back-link" href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
+
+    <!-- Top Form -->
+    <div class="form-card">
+      <h3>Add New Truck Owner</h3>
+        <form method="POST">
+          <div class="form-row">
+            <div>
+              <label for="truck_number">Truck Number</label>
+              <input type="text" name="truck_number" id="truck_number" required>
+            </div>
+            <div>
+              <label for="truck_owner">Truck Owner Name</label>
+              <input type="text" name="truck_owner" id="truck_owner" required>
+            </div>
+            <div>
+              <label for="phone_number">Phone Number</label>
+              <input type="text" name="phone_number" id="phone_number" required>
+            </div>
+            <div>
+              <button type="submit">➕ Add</button>
+            </div>
+          </div>
+        </form>
+
+    </div>
+    <!-- Table and Search -->
+    <div class="table-card">
+      <h3>All Truck Owners</h3>
+      <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search by truck number or owner...">
+
+      <table>
+        <thead>
+          <tr>
+            <th>Truck Number</th>
+            <th>Truck Owner</th>
+            <th>Phone Number</th> <!-- جديد -->
+          </tr>
+        </thead>
+        <tbody id="truckTable">
+          {% for row in truck_owners %}
+          <tr>
+            <td>{{ row.truck_number }}</td>
+            <td>{{ row.truck_owner }}</td>
+            <td>{{ row.phone_number }}</td> <!-- جديد -->
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+    </div>
+  </div>
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const rows = document.querySelectorAll('#truckTable tr');
+
+    searchInput.addEventListener('input', function () {
+      const value = this.value.toLowerCase();
+      rows.forEach(row => {
+        const truckNum = row.children[0].textContent.toLowerCase();
+        const owner = row.children[1].textContent.toLowerCase();
+        const phone = row.children[2].textContent.toLowerCase(); // جديد
+        row.style.display = (truckNum.includes(value) || owner.includes(value) || phone.includes(value)) ? '' : 'none';
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Supplier</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="header">
+    <h1>Add Supplier</h1>
+  </div>
+
+  <div class="page-container">
+    <a class="back-link" href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
+
+    <!-- Form to Add New Supplier -->
+    <div class="form-card">
+      <h3>Add New Supplier</h3>
+      <form method="POST">
+        <div class="form-row">
+          <div>
+            <label for="supplier_name">Supplier Name</label>
+            <input type="text" name="supplier_name" id="supplier_name" required>
+          </div>
+          <div>
+            <label for="phone_number">Phone Number</label>
+            <input type="text" name="phone_number" id="phone_number" required>
+          </div>
+          <div>
+            <button type="submit">➕ Add</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Table of All Suppliers -->
+    <div class="table-card">
+      <h3>All Suppliers</h3>
+      <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search by name or phone number...">
+
+      <table>
+        <thead>
+          <tr>
+            <th>Supplier Name</th>
+            <th>Phone Number</th>
+          </tr>
+        </thead>
+        <tbody id="supplierTable">
+          {% for row in suppliers %}
+          <tr>
+            <td>{{ row.supplier_name }}</td>
+            <td>{{ row.phone_number }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const rows = document.querySelectorAll('#supplierTable tr');
+
+    searchInput.addEventListener('input', function () {
+      const value = this.value.toLowerCase();
+      rows.forEach(row => {
+        const name = row.children[0].textContent.toLowerCase();
+        const phone = row.children[1].textContent.toLowerCase();
+        row.style.display = (name.includes(value) || phone.includes(value)) ? '' : 'none';
+      });
+    });
+  </script>
+</body>
+</html>
