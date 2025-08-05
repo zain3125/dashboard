@@ -11,6 +11,16 @@
   </div>
 
   <div class="page-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages">
+          {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
     <a class="back-link" href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
 
     <div class="form-card">
@@ -18,12 +28,12 @@
       <form method="POST">
         <div class="form-row">
           <div>
-            <label for="rep_name">Representative Name</label>
-            <input type="text" name="rep_name" id="rep_name" required>
+            <label for="representative_name">Representative Name</label>
+            <input type="text" name="representative_name" id="representative_name" required>
           </div>
           <div>
-            <label for="rep_phone">Phone Number</label>
-            <input type="text" name="rep_phone" id="rep_phone" required>
+            <label for="phone">Phone Number</label>
+            <input type="text" name="phone" id="phone" required>
           </div>
           <div>
             <button type="submit">➕ Add</button>
@@ -34,37 +44,41 @@
 
     <div class="table-card">
       <h3>All Representatives</h3>
-      <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search by name or phone...">
+
+      <form method="GET" action="{{ url_for('add_representative') }}">
+        <input type="text" name="query" class="search-input" placeholder="🔍 Search by name or phone..." value="{{ request.args.get('query', '') }}">
+        <button type="submit">Search</button>
+      </form>
+
       <table>
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Phone</th>
+            <th>Representative Name</th>
+            <th>Phone Number</th>
           </tr>
         </thead>
-        <tbody id="repTable">
+        <tbody>
           {% for row in representatives %}
-          <tr>
-            <td>{{ row.name }}</td>
-            <td>{{ row.phone }}</td>
-          </tr>
+            <tr>
+              <td>{{ row[0] }}</td>
+              <td>{{ row[1] }}</td>
+            </tr>
           {% endfor %}
         </tbody>
       </table>
+
+      {% if not request.args.get('query') %}
+      <div class="pagination">
+        {% if page > 1 %}
+          <a href="{{ url_for('add_representative', page=page-1) }}">« Previous</a>
+        {% endif %}
+        <span>Page {{ page }} of {{ total_pages }}</span>
+        {% if page < total_pages %}
+          <a href="{{ url_for('add_representative', page=page+1) }}">Next »</a>
+        {% endif %}
+      </div>
+      {% endif %}
     </div>
   </div>
-
-  <script>
-    const searchInput = document.getElementById('searchInput');
-    const rows = document.querySelectorAll('#repTable tr');
-    searchInput.addEventListener('input', function () {
-      const value = this.value.toLowerCase();
-      rows.forEach(row => {
-        const name = row.children[0].textContent.toLowerCase();
-        const phone = row.children[1].textContent.toLowerCase();
-        row.style.display = (name.includes(value) || phone.includes(value)) ? '' : 'none';
-      });
-    });
-  </script>
 </body>
 </html>

@@ -11,6 +11,16 @@
   </div>
 
   <div class="page-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-messages">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
     <a class="back-link" href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
 
     <div class="form-card">
@@ -30,32 +40,38 @@
 
     <div class="table-card">
       <h3>All Zones</h3>
-      <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search by zone name...">
+
+      <form method="GET" action="{{ url_for('add_zone') }}">
+        <input type="text" name="query" class="search-input" placeholder="🔍 Search by zone name..." value="{{ request.args.get('query', '') }}">
+        <button type="submit">Search</button>
+      </form>
+
       <table>
         <thead>
           <tr>
             <th>Zone Name</th>
           </tr>
         </thead>
-        <tbody id="zoneTable">
+        <tbody>
           {% for row in zones %}
           <tr><td>{{ row }}</td></tr>
           {% endfor %}
         </tbody>
       </table>
+
+      {% if not request.args.get('query') %}
+      <div class="pagination">
+        {% if page > 1 %}
+          <a href="{{ url_for('add_zone', page=page-1) }}">« Previous</a>
+        {% endif %}
+        <span>Page {{ page }} of {{ total_pages }}</span>
+        {% if page < total_pages %}
+          <a href="{{ url_for('add_zone', page=page+1) }}">Next »</a>
+        {% endif %}
+      </div>
+      {% endif %}
+
     </div>
   </div>
-
-  <script>
-    const searchInput = document.getElementById('searchInput');
-    const rows = document.querySelectorAll('#zoneTable tr');
-    searchInput.addEventListener('input', function () {
-      const value = this.value.toLowerCase();
-      rows.forEach(row => {
-        const zone = row.children[0].textContent.toLowerCase();
-        row.style.display = zone.includes(value) ? '' : 'none';
-      });
-    });
-  </script>
 </body>
 </html>

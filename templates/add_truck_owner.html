@@ -37,44 +37,42 @@
 
     </div>
     <!-- Table and Search -->
-    <div class="table-card">
-      <h3>All Truck Owners</h3>
-      <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search by truck number or owner...">
+      <div class="table-card">
+        <h3>All Truck Owners</h3>
+          <form method="GET" action="{{ url_for('add_truck_owner') }}" class="search-form">
+            <input type="text" name="query" id="searchInput" class="search-input" placeholder="🔍 Search by truck number, owner or phone..." value="{{ request.args.get('query', '') }}">
+            <button type="submit">Search</button>
+          </form>
+        <table>
+          <thead>
+            <tr>
+              <th>Truck Number</th>
+              <th>Truck Owner</th>
+              <th>Phone Number</th> <!-- جديد -->
+            </tr>
+          </thead>
+          <tbody id="truckTable">
+            {% for row in truck_owners %}
+            <tr>
+              <td>{{ row.truck_number }}</td>
+              <td>{{ row.truck_owner }}</td>
+              <td>{{ row.phone_number }}</td> <!-- جديد -->
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+          <div class="pagination">
+        {% if page > 1 %}
+          <a href="{{ url_for('add_truck_owner', page=page-1) }}">⬅ Previous</a>
+        {% endif %}
 
-      <table>
-        <thead>
-          <tr>
-            <th>Truck Number</th>
-            <th>Truck Owner</th>
-            <th>Phone Number</th> <!-- جديد -->
-          </tr>
-        </thead>
-        <tbody id="truckTable">
-          {% for row in truck_owners %}
-          <tr>
-            <td>{{ row.truck_number }}</td>
-            <td>{{ row.truck_owner }}</td>
-            <td>{{ row.phone_number }}</td> <!-- جديد -->
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+        <span>Page {{ page }} of {{ total_pages }}</span>
 
+        {% if page < total_pages %}
+          <a href="{{ url_for('add_truck_owner', page=page+1) }}">Next ➡</a>
+        {% endif %}
+      </div>
     </div>
   </div>
-  <script>
-    const searchInput = document.getElementById('searchInput');
-    const rows = document.querySelectorAll('#truckTable tr');
-
-    searchInput.addEventListener('input', function () {
-      const value = this.value.toLowerCase();
-      rows.forEach(row => {
-        const truckNum = row.children[0].textContent.toLowerCase();
-        const owner = row.children[1].textContent.toLowerCase();
-        const phone = row.children[2].textContent.toLowerCase(); // جديد
-        row.style.display = (truckNum.includes(value) || owner.includes(value) || phone.includes(value)) ? '' : 'none';
-      });
-    });
-  </script>
 </body>
 </html>

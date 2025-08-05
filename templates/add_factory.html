@@ -11,9 +11,18 @@
   </div>
 
   <div class="page-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-messages">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% endwith %}
+
     <a class="back-link" href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
 
-    <!-- Form to Add New Factory -->
     <div class="form-card">
       <h3>Add New Factory</h3>
       <form method="POST">
@@ -29,10 +38,13 @@
       </form>
     </div>
 
-    <!-- Table of All Factories -->
     <div class="table-card">
       <h3>All Factories</h3>
-      <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search by factory name...">
+
+      <form method="GET" action="{{ url_for('add_factory') }}">
+        <input type="text" name="query" class="search-input" placeholder="🔍 Search by factory name..." value="{{ request.args.get('query', '') }}">
+        <button type="submit">Search</button>
+      </form>
 
       <table>
         <thead>
@@ -40,28 +52,25 @@
             <th>Factory Name</th>
           </tr>
         </thead>
-        <tbody id="factoryTable">
+        <tbody>
           {% for row in factories %}
-          <tr>
-            <td>{{ row }}</td>
-          </tr>
+          <tr><td>{{ row }}</td></tr>
           {% endfor %}
         </tbody>
       </table>
+
+      {% if not request.args.get('query') %}
+      <div class="pagination">
+        {% if page > 1 %}
+          <a href="{{ url_for('add_factory', page=page-1) }}">« Previous</a>
+        {% endif %}
+        <span>Page {{ page }} of {{ total_pages }}</span>
+        {% if page < total_pages %}
+          <a href="{{ url_for('add_factory', page=page+1) }}">Next »</a>
+        {% endif %}
+      </div>
+      {% endif %}
     </div>
   </div>
-
-  <script>
-    const searchInput = document.getElementById('searchInput');
-    const rows = document.querySelectorAll('#factoryTable tr');
-
-    searchInput.addEventListener('input', function () {
-      const value = this.value.toLowerCase();
-      rows.forEach(row => {
-        const name = row.children[0].textContent.toLowerCase();
-        row.style.display = name.includes(value) ? '' : 'none';
-      });
-    });
-  </script>
 </body>
 </html>

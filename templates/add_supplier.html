@@ -36,7 +36,12 @@
     <!-- Table of All Suppliers -->
     <div class="table-card">
       <h3>All Suppliers</h3>
-      <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search by name or phone number...">
+
+      <!-- Search Form -->
+      <form method="GET" action="{{ url_for('add_supplier') }}" class="search-form">
+        <input type="text" name="query" id="searchInput" class="search-input" placeholder="🔍 Search by name or phone..." value="{{ request.args.get('query', '') }}">
+        <button type="submit">Search</button>
+      </form>
 
       <table>
         <thead>
@@ -54,21 +59,20 @@
           {% endfor %}
         </tbody>
       </table>
+
+      <!-- Pagination -->
+      <div class="pagination">
+        {% if page > 1 %}
+          <a href="{{ url_for('add_supplier', page=page-1, query=request.args.get('query', '')) }}">⬅ Previous</a>
+        {% endif %}
+
+        <span>Page {{ page }} of {{ total_pages }}</span>
+
+        {% if page < total_pages %}
+          <a href="{{ url_for('add_supplier', page=page+1, query=request.args.get('query', '')) }}">Next ➡</a>
+        {% endif %}
+      </div>
     </div>
   </div>
-
-  <script>
-    const searchInput = document.getElementById('searchInput');
-    const rows = document.querySelectorAll('#supplierTable tr');
-
-    searchInput.addEventListener('input', function () {
-      const value = this.value.toLowerCase();
-      rows.forEach(row => {
-        const name = row.children[0].textContent.toLowerCase();
-        const phone = row.children[1].textContent.toLowerCase();
-        row.style.display = (name.includes(value) || phone.includes(value)) ? '' : 'none';
-      });
-    });
-  </script>
 </body>
 </html>
