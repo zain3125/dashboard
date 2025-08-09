@@ -9,6 +9,10 @@
     <header class="header">
         <h1>Al Bayan Co.</h1>
         <img src="{{ url_for('static', filename='al-bayan-logo.png') }}" alt="Al Bayan Logo" />
+
+        <form action="{{ url_for('logout') }}" method="post" style="margin-left:auto;">
+            <button type="submit" class="logout-btn">Logout</button>
+        </form>
     </header>
 
     <main class="container">

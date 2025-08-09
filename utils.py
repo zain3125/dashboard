@@ -404,3 +404,28 @@ def fetch_all_representatives(page, per_page, query=""):
     except Exception as e:
         print(f"Error fetching representatives: {e}")
         return [], 1
+
+def get_user_by_username(username):
+    conn = psycopg2.connect(**PG_PARAMS)
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM users WHERE username = %s", (username,))
+    row = cur.fetchone()
+    conn.close()
+    if row:
+        return {
+            "id": row[0],
+            "username": row[1],
+            "password_hash": row[2],
+            "role": row[3]
+        }
+    return None
+
+def insert_user(username, password_hash, role):
+    conn = psycopg2.connect(**PG_PARAMS)
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)",
+        (username, password_hash, role)
+    )
+    conn.commit()
+    conn.close()

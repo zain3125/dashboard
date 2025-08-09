@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="center-wrapper">
+        <div class="report-box">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            <div class="flash-messages">
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">{{ message }}</div>
+                            {% endfor %}
+                            </div>
+                        {% endif %}
+                        {% endwith %}
+            <h2 class="title">Welcome Back</h2>
+            <p class="subtitle">Please log in to continue</p>
+            <form method="POST">
+                <div class="form-row" style="flex-direction: column; align-items: stretch;">
+                    <label>Username:</label>
+                    <input type="text" name="username" required>
+                </div>
+                <div class="form-row" style="flex-direction: column; align-items: stretch;">
+                    <label>Password:</label>
+                    <input type="password" name="password" required>
+                </div>
+                <div class="form-row" style="margin-top: 1rem;">
+                    <button type="submit">Login</button>
+                </div>
+            </form>
+            <p style="margin-top: 1rem;">
+                Don’t have an account? 
+                <a href="{{ url_for('register') }}" class="back-link">Register here</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

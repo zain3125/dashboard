@@ -1,32 +1,100 @@
-from flask import render_template, request, redirect, url_for, send_file, flash
+from flask import (
+    render_template, request, redirect, url_for,
+    send_file, flash, session
+)
+from functools import wraps
+from werkzeug.security import generate_password_hash, check_password_hash
 from utils import (
     export_transactions_to_excel, fetch_transactions_from_db, insert_truck_owner,
     fetch_all_truck_owners, search_truck_owners, insert_supplier, fetch_all_suppliers,
     search_suppliers, insert_zone, fetch_all_zones, search_zones, insert_factory,
-    fetch_all_factories, insert_representative, fetch_all_representatives
+    fetch_all_factories, insert_representative, fetch_all_representatives,
+    get_user_by_username, insert_user
 )
 
-representatives_list = []
+# ========================
+# Decorator to protect routes
+# ========================
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "user_id" not in session:
+            flash("🔒 يجب تسجيل الدخول أولاً", "warning")
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated_function
+
 
 def register_routes(app):
+    # ========================
+    # Authentication routes
+    # ========================
+    @app.route("/register", methods=["GET", "POST"])
+    def register():
+        if request.method == "POST":
+            username = request.form["username"].strip()
+            password = request.form["password"].strip()
+            role = request.form["role"].strip()
+
+            if get_user_by_username(username):
+                flash("⚠️ اسم المستخدم موجود بالفعل", "danger")
+                return redirect(url_for("register"))
+
+            password_hash = generate_password_hash(password)
+            insert_user(username, password_hash, role)
+            flash("✅ تم التسجيل بنجاح، يرجى تسجيل الدخول", "success")
+            return redirect(url_for("login"))
+
+        return render_template("register.html")
+
+    @app.route("/login", methods=["GET", "POST"])
+    def login():
+        if request.method == "POST":
+            username = request.form["username"].strip()
+            password = request.form["password"].strip()
+
+            user = get_user_by_username(username)
+            if user and check_password_hash(user["password_hash"], password):
+                session["user_id"] = user["id"]
+                session["username"] = user["username"]
+                session["role"] = user["role"]
+                flash("✅ تم تسجيل الدخول بنجاح", "success")
+                return redirect(url_for("dashboard"))
+            else:
+                flash("❌ اسم المستخدم أو كلمة المرور غير صحيحة", "danger")
+
+        return render_template("login.html")
+    
+    @app.route("/logout", methods=["POST"])
+    def logout():
+        session.clear()
+        return redirect(url_for("login"))
+
+    # ========================
+    # Dashboard & Data
+    # ========================
     @app.route("/")
     def index():
         return redirect(url_for("dashboard"))
 
     @app.route("/dashboard")
+    @login_required
     def dashboard():
-        return render_template("dashboard.html")
+        return render_template("dashboard.html", username=session["username"], role=session["role"])
 
     @app.route("/dashboard/data-entry")
+    @login_required
     def data_entry():
         return render_template("data_entry.html")
 
     @app.route("/dashboard/dimension-tables")
+    @login_required
     def dimension_tables():
         return render_template("dimension_tables.html")
 
-        # 🚚 Truck Owners
+    # 🚚 Truck Owners
     @app.route("/dashboard/dimension-tables/add-truck-owner", methods=['GET', 'POST'])
+    @login_required
     def add_truck_owner():
         try:
             page = int(request.args.get("page", 1))
@@ -40,11 +108,7 @@ def register_routes(app):
                 phone_number = request.form.get('phone_number')
 
                 if truck_number and truck_owner:
-                    try:
-                        insert_truck_owner(truck_number, truck_owner, phone_number)
-                        flash("✅ تم إضافة مالك الشاحنة بنجاح", "success")
-                    except Exception as e:
-                        flash(f"❌ فشل في الإضافة: {str(e)}", "error")
+                    insert_truck_owner(truck_number, truck_owner, phone_number)
                     return redirect(url_for("add_truck_owner", page=page))
 
             if query:
@@ -60,12 +124,11 @@ def register_routes(app):
                                 total_pages=total_pages)
         except Exception as e:
             print(f"Error in add_truck_owner: {e}")
-            flash("حدث خطأ أثناء معالجة الطلب", "error")
-            return redirect(url_for("add_truck_owner", page=1))
-
+            return "حدث خطأ أثناء معالجة الطلب"
 
     # 🏭 Factories
     @app.route("/dashboard/dimension-tables/add-factory", methods=['GET', 'POST'])
+    @login_required
     def add_factory():
         PER_PAGE = 10
         query = request.args.get("query", "").strip()
@@ -90,7 +153,9 @@ def register_routes(app):
         factories, total_pages = fetch_all_factories(page, PER_PAGE, query)
         return render_template("add_factory.html", factories=factories, page=page, total_pages=total_pages)
 
+    # 📦 Suppliers
     @app.route("/dashboard/dimension-tables/add-supplier", methods=['GET', 'POST'])
+    @login_required
     def add_supplier():
         try:
             page = int(request.args.get("page", 1))
@@ -123,6 +188,7 @@ def register_routes(app):
 
     # 📍 Zones
     @app.route("/dashboard/dimension-tables/add-zone", methods=['GET', 'POST'])
+    @login_required
     def add_zone():
         try:
             page = int(request.args.get("page", 1))
@@ -155,7 +221,9 @@ def register_routes(app):
             flash("❌ حدث خطأ أثناء معالجة الطلب", "error")
             return "حدث خطأ أثناء معالجة الطلب"
 
+    # 👨‍💼 Representatives
     @app.route("/dashboard/dimension-tables/add-representative", methods=['GET', 'POST'])
+    @login_required
     def add_representative():
         PER_PAGE = 10
         query = request.args.get("query", "").strip()
@@ -182,14 +250,13 @@ def register_routes(app):
         representatives, total_pages = fetch_all_representatives(page, PER_PAGE, query)
         return render_template("add_representative.html", representatives=representatives, page=page, total_pages=total_pages)
 
-
-
     # 💰 Transactions
     @app.route("/dashboard/transactions", methods=['GET', 'POST'])
+    @login_required
     def transactions():
         transactions_data = []
         start = end = ""
-        page = int(request.args.get("page", 1))  # ← رقم الصفحة
+        page = int(request.args.get("page", 1))
         per_page = 10
         offset = (page - 1) * per_page
 
@@ -213,6 +280,7 @@ def register_routes(app):
 
     # ⬇️ Export Excel
     @app.route("/dashboard/transactions/export", methods=['POST'])
+    @login_required
     def export_transactions():
         start = request.form.get("start_date")
         end = request.form.get("end_date")
