@@ -56,30 +56,38 @@ def insert_truck_owner(truck_number, truck_owner, phone_number):
         conn = psycopg2.connect(**PG_PARAMS)
         cur = conn.cursor()
 
-        # إدخال المالك أو تجاهله إذا كان موجودًا (بناءً على الاسم + الهاتف)
-        cur.execute("""
-            INSERT INTO truck_owners (owner_name, phone)
-            VALUES (%s, %s)
-            ON CONFLICT DO NOTHING
-        """, (truck_owner, phone_number))
-
-        # جلب owner_id
+        # تحقق إذا كان المالك موجود مسبقًا
         cur.execute("""
             SELECT owner_id FROM truck_owners
             WHERE owner_name = %s AND phone = %s
-            LIMIT 1
         """, (truck_owner, phone_number))
         owner_result = cur.fetchone()
-        if not owner_result:
-            raise Exception("لم يتم العثور على المالك بعد الإدخال")
 
-        owner_id = owner_result[0]
+        if owner_result:
+            owner_id = owner_result[0]
+        else:
+            # إدخال مالك جديد
+            cur.execute("""
+                INSERT INTO truck_owners (owner_name, phone)
+                VALUES (%s, %s)
+                RETURNING owner_id
+            """, (truck_owner, phone_number))
+            owner_id = cur.fetchone()[0]
+
+        # تحقق إذا كان رقم الشاحنة موجود مسبقًا
+        cur.execute("""
+            SELECT truck_num FROM trucks
+            WHERE truck_num = %s
+        """, (truck_number,))
+        truck_exists = cur.fetchone()
+
+        if truck_exists:
+            raise Exception(f"🚫 رقم الشاحنة '{truck_number}' موجود بالفعل في قاعدة البيانات.")
 
         # إدخال الشاحنة وربطها بالمالك
         cur.execute("""
             INSERT INTO trucks (truck_num, owner_id)
             VALUES (%s, %s)
-            ON CONFLICT (truck_num) DO NOTHING
         """, (truck_number, owner_id))
 
         conn.commit()

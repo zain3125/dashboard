@@ -40,7 +40,11 @@ def register_routes(app):
                 phone_number = request.form.get('phone_number')
 
                 if truck_number and truck_owner:
-                    insert_truck_owner(truck_number, truck_owner, phone_number)
+                    try:
+                        insert_truck_owner(truck_number, truck_owner, phone_number)
+                        flash("✅ تم إضافة مالك الشاحنة بنجاح", "success")
+                    except Exception as e:
+                        flash(f"❌ فشل في الإضافة: {str(e)}", "error")
                     return redirect(url_for("add_truck_owner", page=page))
 
             if query:
@@ -56,7 +60,9 @@ def register_routes(app):
                                 total_pages=total_pages)
         except Exception as e:
             print(f"Error in add_truck_owner: {e}")
-            return "حدث خطأ أثناء معالجة الطلب"
+            flash("حدث خطأ أثناء معالجة الطلب", "error")
+            return redirect(url_for("add_truck_owner", page=1))
+
 
     # 🏭 Factories
     @app.route("/dashboard/dimension-tables/add-factory", methods=['GET', 'POST'])
