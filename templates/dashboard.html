@@ -40,6 +40,19 @@
                 <p>View insights and performance metrics</p>
             </a>
 
+            {% if role in ['admin', 'accountant'] %}
+                <a href="{{ url_for('custodies') }}" class="card wallet">
+                    <h3>All Custodies</h3>
+                    <p>View all employees' custodies</p>
+                </a>
+            {% else %}
+                <a href="{{ url_for('custody_detail', user_id=user_id) }}" class="card wallet">
+
+                    <h3>My Custody</h3>
+                    <p>View my custody records</p>
+                </a>
+            {% endif %}
+
             <a href="{{ url_for('settings') }}" class="card gear">
                 <h3>Settings</h3>
                 <p>Configure system preferences and options</p>

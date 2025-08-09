@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import psycopg2
+from psycopg2 import extras
 import math
 from db import PG_PARAMS
 
@@ -440,3 +441,29 @@ def update_user_password(user_id, new_password_hash):
     conn.commit()
     cur.close()
     conn.close()
+
+def get_all_users(exclude_roles=None):
+    conn = psycopg2.connect(**PG_PARAMS)
+    cur = conn.cursor(cursor_factory=extras.RealDictCursor)
+
+    if exclude_roles:
+        placeholders = ",".join(["%s"] * len(exclude_roles))
+        query = f"SELECT id, username, role FROM users WHERE role NOT IN ({placeholders}) ORDER BY username"
+        cur.execute(query, exclude_roles)
+    else:
+        cur.execute("SELECT id, username, role FROM users ORDER BY username")
+
+    users = cur.fetchall()
+    cur.close()
+    conn.close()
+    return users
+
+
+def get_custody_by_user_id(user_id):
+    conn = psycopg2.connect(**PG_PARAMS)
+    cur = conn.cursor(cursor_factory=extras.RealDictCursor)
+    cur.execute("SELECT * FROM custody WHERE user_id = %s ORDER BY date", (user_id,))
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return rows

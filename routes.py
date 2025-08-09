@@ -1,6 +1,6 @@
 from flask import (
     render_template, request, redirect, url_for,
-    send_file, flash, session
+    send_file, flash, session, abort
 )
 from functools import wraps
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -9,7 +9,7 @@ from utils import (
     fetch_all_truck_owners, search_truck_owners, insert_supplier, fetch_all_suppliers,
     search_suppliers, insert_zone, fetch_all_zones, search_zones, insert_factory,
     fetch_all_factories, insert_representative, fetch_all_representatives,
-    get_user_by_username, update_user_password
+    get_user_by_username, update_user_password, get_all_users, get_custody_by_user_id
 )
 
 # ========================
@@ -62,7 +62,7 @@ def register_routes(app):
     @app.route("/dashboard")
     @login_required
     def dashboard():
-        return render_template("dashboard.html", username=session["username"], role=session["role"])
+        return render_template("dashboard.html", username=session["username"], role=session["role"], user_id=session["user_id"])
 
     @app.route("/settings")
     @login_required
@@ -306,3 +306,37 @@ def register_routes(app):
             return redirect(url_for("dashboard"))
 
         return render_template("change_password.html")
+
+    @app.route("/custodies")
+    def custodies():
+        # لازم يكون المستخدم مسجل دخول
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+
+        role = session.get("role")
+
+        # لو Admin أو Accountant يشوف كل العهد (ما عدا المحاسبين)
+        if role in ["admin", "accountant"]:
+            users = get_all_users(exclude_roles=["accountant", "admin"])
+            return render_template("custodies_list.html", users=users)
+
+        # لو موظف عادي → يروح مباشرة لعهدته
+        return redirect(url_for("custody_detail", user_id=session["user_id"]))
+
+
+    @app.route("/custody/<int:user_id>")
+    def custody_detail(user_id):
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+
+        role = session.get("role")
+        current_user_id = session["user_id"]
+
+        # لو Admin أو Accountant → يقدر يشوف أي عهدة
+        # لو موظف عادي → يقدر يشوف بس عهدته
+        if role not in ["admin", "accountant"] and current_user_id != user_id:
+            abort(403)  # ممنوع
+
+        custody_data = get_custody_by_user_id(user_id)
+        return render_template("custody_detail.html", custody_data=custody_data)
+        

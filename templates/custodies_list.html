@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Custodies</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="header">
+        <h1>Custodies</h1>
+        <a href="{{ url_for('dashboard') }}">⬅ Back to Dashboard</a>
+    </header>
+
+    <main class="container">
+        <h2 class="title">All Employees' Custodies</h2>
+        <p class="subtitle">Click on a user to view their custody details</p>
+
+        <ul class="list">
+            {% for user in users %}
+                <li>
+                    <a href="{{ url_for('custody_detail', user_id=user.id) }}">
+                        {{ user.username }} ({{ user.role }})
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    </main>
+</body>
+</html>

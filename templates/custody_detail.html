@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Custody Details</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="header">
+        <h1>Custody Details</h1>
+        <a href="{{ url_for('custodies') }}">⬅ Back to Custodies</a>
+    </header>
+
+    <main class="container">
+        {% if custody_data %}
+            <table border="1" cellpadding="8" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Incoming</th>
+                        <th>Outgoing</th>
+                        <th>Balance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in custody_data %}
+                        <tr>
+                            <td>{{ row.date }}</td>
+                            <td>{{ row.description }}</td>
+                            <td>{{ row.incoming }}</td>
+                            <td>{{ row.outgoing }}</td>
+                            <td>{{ row.balance }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No custody records found for this user.</p>
+        {% endif %}
+    </main>
+</body>
+</html>
