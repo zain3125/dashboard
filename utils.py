@@ -429,3 +429,14 @@ def insert_user(username, password_hash, role):
     )
     conn.commit()
     conn.close()
+
+def update_user_password(user_id, new_password_hash):
+    conn = psycopg2.connect(**PG_PARAMS)
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE users SET password_hash = %s WHERE id = %s",
+        (new_password_hash, user_id)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()

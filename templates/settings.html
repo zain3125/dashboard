@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Settings</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="header">
+        <h1>Al Bayan Co.</h1>
+        <img src="{{ url_for('static', filename='al-bayan-logo.png') }}" alt="Al Bayan Logo" />
+    </header>
+
+    <main class="container">
+        <a href="{{ url_for('dashboard') }}" class="text-blue-600 hover:underline">&larr; Back to Dashboard</a>
+        <h2 class="title">Settings</h2>
+        <p class="subtitle">Manage your account and system preferences</p>
+
+        <div class="grid">
+            <a href="{{ url_for('change_password') }}" class="card gear">
+                <h3>🔑 Change Password</h3>
+                <p>Update your account password</p>
+            </a>
+
+            <a href="#" class="card gear">
+                <h3>⚙️ Other Settings</h3>
+                <p>System options and general preferences</p>
+            </a>
+        </div>
+    </main>
+</body>
+</html>

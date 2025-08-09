@@ -3,13 +3,13 @@ from flask import (
     send_file, flash, session
 )
 from functools import wraps
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 from utils import (
     export_transactions_to_excel, fetch_transactions_from_db, insert_truck_owner,
     fetch_all_truck_owners, search_truck_owners, insert_supplier, fetch_all_suppliers,
     search_suppliers, insert_zone, fetch_all_zones, search_zones, insert_factory,
     fetch_all_factories, insert_representative, fetch_all_representatives,
-    get_user_by_username, insert_user
+    get_user_by_username, update_user_password
 )
 
 # ========================
@@ -29,24 +29,6 @@ def register_routes(app):
     # ========================
     # Authentication routes
     # ========================
-    @app.route("/register", methods=["GET", "POST"])
-    def register():
-        if request.method == "POST":
-            username = request.form["username"].strip()
-            password = request.form["password"].strip()
-            role = request.form["role"].strip()
-
-            if get_user_by_username(username):
-                flash("⚠️ اسم المستخدم موجود بالفعل", "danger")
-                return redirect(url_for("register"))
-
-            password_hash = generate_password_hash(password)
-            insert_user(username, password_hash, role)
-            flash("✅ تم التسجيل بنجاح، يرجى تسجيل الدخول", "success")
-            return redirect(url_for("login"))
-
-        return render_template("register.html")
-
     @app.route("/login", methods=["GET", "POST"])
     def login():
         if request.method == "POST":
@@ -81,6 +63,12 @@ def register_routes(app):
     @login_required
     def dashboard():
         return render_template("dashboard.html", username=session["username"], role=session["role"])
+
+    @app.route("/settings")
+    @login_required
+    def settings():
+        return render_template("settings.html")
+
 
     @app.route("/dashboard/data-entry")
     @login_required
@@ -288,3 +276,33 @@ def register_routes(app):
         if file_path:
             return send_file(file_path, as_attachment=True)
         return "Export failed or no data found"
+
+    @app.route("/change-password", methods=["GET", "POST"])
+    @login_required
+    def change_password():
+        if request.method == "POST":
+            current_password = request.form["current_password"].strip()
+            new_password = request.form["new_password"].strip()
+            confirm_password = request.form["confirm_password"].strip()
+
+            # جلب بيانات المستخدم الحالي
+            user = get_user_by_username(session["username"])
+
+            # التحقق من كلمة المرور الحالية
+            if not check_password_hash(user["password_hash"], current_password):
+                flash("❌ كلمة المرور الحالية غير صحيحة", "danger")
+                return redirect(url_for("change_password"))
+
+            # التحقق من تطابق كلمة المرور الجديدة مع التأكيد
+            if new_password != confirm_password:
+                flash("❌ كلمة المرور الجديدة غير متطابقة", "danger")
+                return redirect(url_for("change_password"))
+
+            # تحديث كلمة المرور
+            new_password_hash = generate_password_hash(new_password)
+            update_user_password(user["id"], new_password_hash)
+
+            flash("✅ تم تغيير كلمة المرور بنجاح", "success")
+            return redirect(url_for("dashboard"))
+
+        return render_template("change_password.html")
