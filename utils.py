@@ -7,6 +7,51 @@ from db import PG_PARAMS
 
 SAVEING_PATH = "exports"
 
+# User management functions
+def get_user_by_username(username):
+    conn = psycopg2.connect(**PG_PARAMS)
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM users WHERE username = %s", (username,))
+    row = cur.fetchone()
+    conn.close()
+    if row:
+        return {
+            "id": row[0],
+            "username": row[1],
+            "password_hash": row[2],
+            "role": row[3]
+        }
+    return None
+
+def update_user_password(user_id, new_password_hash):
+    conn = psycopg2.connect(**PG_PARAMS)
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE users SET password_hash = %s WHERE id = %s",
+        (new_password_hash, user_id)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+
+def get_all_users(exclude_roles=None):
+    conn = psycopg2.connect(**PG_PARAMS)
+    cur = conn.cursor(cursor_factory=extras.RealDictCursor)
+
+    if exclude_roles:
+        placeholders = ",".join(["%s"] * len(exclude_roles))
+        query = f"SELECT id, username, role FROM users WHERE role NOT IN ({placeholders}) ORDER BY username"
+        cur.execute(query, exclude_roles)
+    else:
+        cur.execute("SELECT id, username, role FROM users ORDER BY username")
+
+    users = cur.fetchall()
+    cur.close()
+    conn.close()
+    return users
+# ========================
+
+# Transaction management functions
 def export_transactions_to_excel(start, end):
     try:
         data = fetch_transactions_from_db(start, end)
@@ -51,7 +96,13 @@ def fetch_transactions_from_db(start, end, limit=10, offset=0):
     except Exception as e:
         print(f"DB fetch error: {e}")
         return []
+# ========================
 
+# *******************************************************
+# *           Dim table management functions            *
+# *******************************************************
+
+# Truck management functions
 def insert_truck_owner(truck_number, truck_owner, phone_number):
     try:
         conn = psycopg2.connect(**PG_PARAMS)
@@ -154,7 +205,9 @@ def search_truck_owners(query):
     except Exception as e:
         print(f"Error searching truck owners: {e}")
         return []
+# ========================
 
+# Supplier management functions
 def insert_supplier(supplier_name, phone_number):
     try:
         conn = psycopg2.connect(**PG_PARAMS)
@@ -215,7 +268,9 @@ def search_suppliers(query):
     except Exception as e:
         print(f"Error searching suppliers: {e}")
         return []
+# ========================
 
+# Zone management functions
 def insert_zone(zone_name):
     try:
         conn = psycopg2.connect(**PG_PARAMS)
@@ -241,7 +296,6 @@ def insert_zone(zone_name):
         print(f"Error inserting zone: {e}")
         return None  # خطأ في التنفيذ
 
-# الدالة لجلب كل المناطق (مع pagination)
 def fetch_all_zones(limit=10, offset=0):
     try:
         conn = conn = psycopg2.connect(**PG_PARAMS)
@@ -258,7 +312,6 @@ def fetch_all_zones(limit=10, offset=0):
         print(f"Error fetching zones: {e}")
         return [], 0
 
-# الدالة للبحث
 def search_zones(query):
     try:
         conn = conn = psycopg2.connect(**PG_PARAMS)
@@ -272,7 +325,9 @@ def search_zones(query):
     except Exception as e:
         print(f"Error searching zones: {e}")
         return []
+# ========================
 
+# Factory management functions
 def insert_factory(factory_name):
     try:
         conn = psycopg2.connect(**PG_PARAMS)
@@ -292,7 +347,6 @@ def insert_factory(factory_name):
     except Exception as e:
         print(f"Error inserting factory: {e}")
         return "error"
-
 
 def fetch_all_factories(page, per_page, query):
     conn = psycopg2.connect(**PG_PARAMS)
@@ -339,7 +393,9 @@ def search_factories(query):
     except Exception as e:
         print(f"Error searching factories: {e}")
         return []
+# ========================
 
+# Representative management functions
 def insert_representative(representative_name, phone):
     try:
         conn = psycopg2.connect(**PG_PARAMS)
@@ -362,7 +418,6 @@ def insert_representative(representative_name, phone):
     except Exception as e:
         print("Error inserting representative:", e)
         return "error"
-
 
 def fetch_all_representatives(page, per_page, query=""):
     try:
@@ -405,60 +460,10 @@ def fetch_all_representatives(page, per_page, query=""):
     except Exception as e:
         print(f"Error fetching representatives: {e}")
         return [], 1
+# ========================
+# *******************************************************
 
-def get_user_by_username(username):
-    conn = psycopg2.connect(**PG_PARAMS)
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM users WHERE username = %s", (username,))
-    row = cur.fetchone()
-    conn.close()
-    if row:
-        return {
-            "id": row[0],
-            "username": row[1],
-            "password_hash": row[2],
-            "role": row[3]
-        }
-    return None
-
-def insert_user(username, password_hash, role):
-    conn = psycopg2.connect(**PG_PARAMS)
-    cur = conn.cursor()
-    cur.execute(
-        "INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)",
-        (username, password_hash, role)
-    )
-    conn.commit()
-    conn.close()
-
-def update_user_password(user_id, new_password_hash):
-    conn = psycopg2.connect(**PG_PARAMS)
-    cur = conn.cursor()
-    cur.execute(
-        "UPDATE users SET password_hash = %s WHERE id = %s",
-        (new_password_hash, user_id)
-    )
-    conn.commit()
-    cur.close()
-    conn.close()
-
-def get_all_users(exclude_roles=None):
-    conn = psycopg2.connect(**PG_PARAMS)
-    cur = conn.cursor(cursor_factory=extras.RealDictCursor)
-
-    if exclude_roles:
-        placeholders = ",".join(["%s"] * len(exclude_roles))
-        query = f"SELECT id, username, role FROM users WHERE role NOT IN ({placeholders}) ORDER BY username"
-        cur.execute(query, exclude_roles)
-    else:
-        cur.execute("SELECT id, username, role FROM users ORDER BY username")
-
-    users = cur.fetchall()
-    cur.close()
-    conn.close()
-    return users
-
-
+# Custody management functions
 def get_custody_by_user_id(user_id):
     conn = psycopg2.connect(**PG_PARAMS)
     cur = conn.cursor(cursor_factory=extras.RealDictCursor)
@@ -467,3 +472,92 @@ def get_custody_by_user_id(user_id):
     cur.close()
     conn.close()
     return rows
+
+def fetch_all_trucks_with_owners():
+    try:
+        conn = psycopg2.connect(**PG_PARAMS)
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT t.truck_num, o.owner_name
+            FROM trucks t
+            JOIN truck_owners o ON t.owner_id = o.owner_id
+            ORDER BY t.truck_num
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return rows  # [(truck_num, owner_name), ...]
+    except Exception as e:
+        print(f"Error fetching trucks with owners: {e}")
+        return []
+
+def get_or_create_date_id(cur, full_date):
+    cur.execute("SELECT date_id FROM dim_date WHERE full_date = %s", (full_date,))
+    row = cur.fetchone()
+    if row:
+        return row[0]
+    cur.execute("""
+        INSERT INTO dim_date (full_date, year, month, day, day_name)
+        VALUES (
+            %s,
+            EXTRACT(YEAR FROM %s::date),
+            EXTRACT(MONTH FROM %s::date),
+            EXTRACT(DAY FROM %s::date),
+            TO_CHAR(%s::date, 'Day')
+        )
+        RETURNING date_id
+    """, (full_date, full_date, full_date, full_date, full_date))
+    return cur.fetchone()[0]
+
+
+def get_id_by_name(cur, table, id_col, name_col, name):
+    cur.execute(f"SELECT {id_col} FROM {table} WHERE {name_col} = %s", (name,))
+    row = cur.fetchone()
+    if row:
+        return row[0]
+    cur.execute(f"INSERT INTO {table} ({name_col}) VALUES (%s) RETURNING {id_col}", (name,))
+    return cur.fetchone()[0]
+
+
+def save_data_entry(data):
+    """
+    data: dict يحتوي على القوائم القادمة من الفورم
+    """
+    try:
+        conn = psycopg2.connect(**PG_PARAMS)
+        cur = conn.cursor()
+
+        for i in range(len(data["dates"])):
+            if not data["dates"][i] or not data["truck_nums"][i] or not data["suppliers"][i] \
+               or not data["factories_list"][i] or not data["zones_list"][i] or not data["representatives_list"][i]:
+                continue
+
+            date_id = get_or_create_date_id(cur, data["dates"][i])
+            supplier_id = get_id_by_name(cur, "suppliers", "supplier_id", "supplier_name", data["suppliers"][i])
+            factory_id = get_id_by_name(cur, "factories", "factory_id", "factory_name", data["factories_list"][i])
+            zone_id = get_id_by_name(cur, "zones", "zone_id", "zone_name", data["zones_list"][i])
+            representative_id = get_id_by_name(cur, "representatives", "representative_id", "representative_name", data["representatives_list"][i])
+            owner_id = get_id_by_name(cur, "truck_owners", "owner_id", "owner_name", data["truck_owners"][i]) if data["truck_owners"][i] else None
+
+            cur.execute("SELECT truck_num FROM trucks WHERE truck_num = %s", (data["truck_nums"][i],))
+            if not cur.fetchone():
+                cur.execute("INSERT INTO trucks (truck_num, owner_id) VALUES (%s, %s)", (data["truck_nums"][i], owner_id))
+
+            cur.execute("""
+                INSERT INTO main (date_id, truck_num, supplier_id, factory_id, zone_id, weight, ohda, factory_price, sell_price, representative_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                date_id, data["truck_nums"][i], supplier_id, factory_id, zone_id,
+                data["weights"][i] or None, data["ohdas"][i] or None,
+                data["factory_prices"][i] or None, data["sell_prices"][i] or None,
+                representative_id
+            ))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+        return True
+
+    except Exception as e:
+        print(f"Error saving data: {e}")
+        return False

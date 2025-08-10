@@ -67,6 +67,7 @@ body {
 .db { border-left: 6px solid #a855f7; }
 .chart { border-left: 6px solid #f59e0b; }
 .gear { border-left: 6px solid #6b7280; }
+.wallet { border-left: 6px solid #ec4899; }
 
 .page-container {
     padding: 2rem 3rem;

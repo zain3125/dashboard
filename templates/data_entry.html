@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Data Entry</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
@@ -13,110 +13,165 @@
         <p class="text-gray-600">Add new records to the database</p>
 
         <div class="bg-white p-6 mt-6 rounded shadow">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-semibold">Transaction Data Entry</h2>
-                <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">+ Add Row</button>
-            </div>
-<div class="overflow-auto mt-6">
-    <table class="min-w-full text-sm text-left">
-        <thead class="bg-gray-100 border-b">
-            <tr>
-                <th class="p-2">Date*</th>
-                <th class="p-2">Truck Number*</th>
-                <th class="p-2">Truck Owner</th>
-                <th class="p-2">Supplier*</th>
-                <th class="p-2">Factory*</th>
-                <th class="p-2">Zone*</th>
-                <th class="p-2">Weight*</th>
-                <th class="p-2">Ohda*</th>
-                <th class="p-2">Factory Price*</th>
-                <th class="p-2">Sell Price*</th>
-                <th class="p-2">Representative*</th>
-                <th class="p-2">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr class="border-b">
-                <!-- Date -->
-                <td class="p-2"><input type="date" class="border rounded px-2 py-1 w-full"></td>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="mb-4 p-2 rounded {% if category == 'success' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
 
-                <!-- Truck Number -->
-                <td class="p-2">
-                    <select id="truck_num" class="border rounded px-2 py-1 w-full">
-                        <option>Select Truck</option>
-                        <!-- Fill with trucks from DB -->
-                        <option value="TRK001">TRK001</option>
-                        <option value="TRK002">TRK002</option>
-                    </select>
-                </td>
+            <form method="POST" id="data-form">
+                <table class="min-w-full text-sm text-left" id="data-table">
+                    <thead class="bg-gray-100 border-b">
+                        <tr>
+                            <th class="p-2">Date*</th>
+                            <th class="p-2">Truck Number*</th>
+                            <th class="p-2">Truck Owner</th>
+                            <th class="p-2">Supplier*</th>
+                            <th class="p-2">Factory*</th>
+                            <th class="p-2">Zone*</th>
+                            <th class="p-2">Weight*</th>
+                            <th class="p-2">Ohda*</th>
+                            <th class="p-2">Factory Price*</th>
+                            <th class="p-2">Sell Price*</th>
+                            <th class="p-2">Representative*</th>
+                            <th class="p-2">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- initial row -->
+                        <tr class="border-b">
+                            <td class="p-2"><input type="date" name="date[]" class="border rounded px-2 py-1 w-full"></td>
 
-                <!-- Truck Owner (auto-filled) -->
-                <td class="p-2">
-                    <input type="text" id="truck_owner" class="border rounded px-2 py-1 w-full bg-gray-100" placeholder="Owner Name" readonly>
-                </td>
+                            <td class="p-2">
+                                <select name="truck_num[]" class="border rounded px-2 py-1 w-full">
+                                    <option value="">Select Truck</option>
+                                    {% for num, owner in trucks %}
+                                        <option value="{{ num }}">{{ num }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
 
-                <!-- Supplier -->
-                <td class="p-2">
-                    <select class="border rounded px-2 py-1 w-full">
-                        <option>Select Supplier</option>
-                    </select>
-                </td>
+                            <td class="p-2">
+                                <input type="text" name="truck_owner[]" class="border rounded px-2 py-1 w-full bg-gray-100" readonly>
+                            </td>
 
-                <!-- Factory -->
-                <td class="p-2">
-                    <select class="border rounded px-2 py-1 w-full">
-                        <option>Select Factory</option>
-                    </select>
-                </td>
+                            <td class="p-2">
+                                <select name="supplier[]" class="border rounded px-2 py-1 w-full">
+                                    <option value="">Select Supplier</option>
+                                    {% for sup in suppliers %}
+                                        <option value="{{ sup.supplier_name }}">{{ sup.supplier_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
 
-                <!-- Zone -->
-                <td class="p-2">
-                    <select class="border rounded px-2 py-1 w-full">
-                        <option>Select Zone</option>
-                    </select>
-                </td>
+                            <td class="p-2">
+                                <select name="factory[]" class="border rounded px-2 py-1 w-full">
+                                    <option value="">Select Factory</option>
+                                    {% for fac in factories %}
+                                        <option value="{{ fac }}">{{ fac }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
 
-                <!-- Weight -->
-                <td class="p-2">
-                    <input type="number" class="border rounded px-2 py-1 w-full" placeholder="Weight">
-                </td>
+                            <td class="p-2">
+                                <select name="zone[]" class="border rounded px-2 py-1 w-full">
+                                    <option value="">Select Zone</option>
+                                    {% for z in zones %}
+                                        <option value="{{ z }}">{{ z }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
 
-                <!-- Ohda -->
-                <td class="p-2">
-                    <input type="number" class="border rounded px-2 py-1 w-full" placeholder="Ohda">
-                </td>
+                            <td class="p-2"><input type="number" name="weight[]" step="any" class="border rounded px-2 py-1 w-full"></td>
+                            <td class="p-2"><input type="number" name="ohda[]" step="any" class="border rounded px-2 py-1 w-full"></td>
+                            <td class="p-2"><input type="number" name="factory_price[]" step="any" class="border rounded px-2 py-1 w-full"></td>
+                            <td class="p-2"><input type="number" name="sell_price[]" step="any" class="border rounded px-2 py-1 w-full"></td>
 
-                <!-- Factory Price -->
-                <td class="p-2">
-                    <input type="number" class="border rounded px-2 py-1 w-full" placeholder="Factory Price">
-                </td>
+                            <td class="p-2">
+                                <select name="representative[]" class="border rounded px-2 py-1 w-full">
+                                    <option value="">Select Representative</option>
+                                    {% for rep, phone in representatives %}
+                                        <option value="{{ rep }}">{{ rep }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
 
-                <!-- Sell Price -->
-                <td class="p-2">
-                    <input type="number" class="border rounded px-2 py-1 w-full" placeholder="Sell Price">
-                </td>
+                            <td class="p-2 text-center">
+                                <button type="button" class="remove-row text-red-500 hover:text-red-700">🗑</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
 
-                <!-- Representative -->
-                <td class="p-2">
-                    <select class="border rounded px-2 py-1 w-full">
-                        <option>Select Representative</option>
-                    </select>
-                </td>
-
-                <!-- Actions -->
-                <td class="p-2 text-center">
-                    <button class="text-red-500 hover:text-red-700">🗑</button>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-
-            <div class="flex justify-end gap-2 mt-4">
-                <button class="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded">Clear All</button>
-                <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">💾 Save All Entries</button>
-            </div>
+                <div class="flex justify-between mt-4">
+                    <button type="button" onclick="addRow()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">➕ Add Row</button>
+                    <div class="flex gap-2">
+                        <button type="reset" class="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded">Clear</button>
+                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">💾 Save</button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
+
+    <script>
+        // Build a map from truck number to owner from the server-provided 'trucks' list.
+        // 'trucks' is expected to be a list of [num, owner] pairs.
+        const truckArr = {{ trucks|tojson }};
+        const truckMap = {};
+        truckArr.forEach(pair => {
+            if (pair && pair.length >= 2) truckMap[String(pair[0])] = String(pair[1]);
+        });
+
+        const tbody = document.querySelector("#data-table tbody");
+
+        // Delegated listener: when a truck select changes, fill owner in the same row
+        tbody.addEventListener('change', function(e) {
+            const sel = e.target;
+            if (sel && sel.matches('select[name="truck_num[]"]')) {
+                const row = sel.closest('tr');
+                const ownerInput = row.querySelector('input[name="truck_owner[]"]');
+                const owner = truckMap[sel.value] || '';
+                if (ownerInput) ownerInput.value = owner;
+            }
+        });
+
+        // Delegated listener: remove-row buttons
+        tbody.addEventListener('click', function(e) {
+            const btn = e.target;
+            if (btn && btn.matches('.remove-row')) {
+                const row = btn.closest('tr');
+                // keep at least one row
+                const rows = tbody.querySelectorAll('tr');
+                if (rows.length > 1) {
+                    row.remove();
+                } else {
+                    // if last row, just clear its fields
+                    row.querySelectorAll('input, select').forEach(el => {
+                        if (el.tagName === 'SELECT') el.selectedIndex = 0;
+                        else el.value = '';
+                    });
+                }
+            }
+        });
+
+        function addRow() {
+            const firstRow = tbody.rows[0];
+            const newRow = firstRow.cloneNode(true);
+
+            // Clear inputs/selects
+            newRow.querySelectorAll('input, select').forEach(el => {
+                if (el.tagName === 'SELECT') el.selectedIndex = 0;
+                else el.value = '';
+            });
+
+            tbody.appendChild(newRow);
+            // No need to attach handlers — we use event delegation on tbody
+        }
+    </script>
 </body>
 </html>

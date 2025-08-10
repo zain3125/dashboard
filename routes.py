@@ -9,7 +9,8 @@ from utils import (
     fetch_all_truck_owners, search_truck_owners, insert_supplier, fetch_all_suppliers,
     search_suppliers, insert_zone, fetch_all_zones, search_zones, insert_factory,
     fetch_all_factories, insert_representative, fetch_all_representatives,
-    get_user_by_username, update_user_password, get_all_users, get_custody_by_user_id
+    get_user_by_username, update_user_password, get_all_users, get_custody_by_user_id,
+    fetch_all_trucks_with_owners, save_data_entry
 )
 
 # ========================
@@ -69,11 +70,44 @@ def register_routes(app):
     def settings():
         return render_template("settings.html")
 
-
-    @app.route("/dashboard/data-entry")
-    @login_required
+    @app.route("/data-entry", methods=["GET", "POST"])
     def data_entry():
-        return render_template("data_entry.html")
+        if request.method == "POST":
+            data = {
+                "dates": request.form.getlist("date[]"),
+                "truck_nums": request.form.getlist("truck_num[]"),
+                "truck_owners": request.form.getlist("truck_owner[]"),
+                "suppliers": request.form.getlist("supplier[]"),
+                "factories_list": request.form.getlist("factory[]"),
+                "zones_list": request.form.getlist("zone[]"),
+                "weights": request.form.getlist("weight[]"),
+                "ohdas": request.form.getlist("ohda[]"),
+                "factory_prices": request.form.getlist("factory_price[]"),
+                "sell_prices": request.form.getlist("sell_price[]"),
+                "representatives_list": request.form.getlist("representative[]")
+            }
+
+            if save_data_entry(data):
+                flash("✅ تم حفظ البيانات بنجاح!", "success")
+            else:
+                flash("❌ حدث خطأ أثناء حفظ البيانات", "error")
+
+            return redirect(url_for("data_entry"))
+
+        trucks = fetch_all_trucks_with_owners()
+        suppliers, _ = fetch_all_suppliers(limit=100, offset=0)
+        factories, _ = fetch_all_factories(page=1, per_page=100, query="")
+        zones, _ = fetch_all_zones(limit=100, offset=0)
+        representatives, _ = fetch_all_representatives(page=1, per_page=100)
+
+        return render_template(
+            "data_entry.html",
+            trucks=trucks,
+            suppliers=suppliers,
+            factories=factories,
+            zones=zones,
+            representatives=representatives
+        )
 
     @app.route("/dashboard/dimension-tables")
     @login_required
@@ -339,4 +373,3 @@ def register_routes(app):
 
         custody_data = get_custody_by_user_id(user_id)
         return render_template("custody_detail.html", custody_data=custody_data)
-        
