@@ -13,16 +13,6 @@
         <p class="text-gray-600">Add new records to the database</p>
 
         <div class="bg-white p-6 mt-6 rounded shadow">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="mb-4 p-2 rounded {% if category == 'success' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-
             <form method="POST" id="data-form">
                 <table class="min-w-full text-sm text-left" id="data-table">
                     <thead class="bg-gray-100 border-b">
@@ -42,7 +32,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- initial row -->
                         <tr class="border-b">
                             <td class="p-2"><input type="date" name="date[]" class="border rounded px-2 py-1 w-full"></td>
 
@@ -115,21 +104,69 @@
                     </div>
                 </div>
             </form>
+            <hr class="my-6">
+            <h2 class="text-2xl font-bold mb-4">This month records</h2>
+            <table class="min-w-full text-sm text-left bg-white rounded shadow">
+                <thead class="bg-gray-100 border-b">
+                    <tr>
+                        <th class="p-2">Date*</th>
+                        <th class="p-2">Truck Number*</th>
+                        <th class="p-2">Truck Owner</th>
+                        <th class="p-2">Supplier*</th>
+                        <th class="p-2">Factory*</th>
+                        <th class="p-2">Zone*</th>
+                        <th class="p-2">Weight*</th>
+                        <th class="p-2">Ohda*</th>
+                        <th class="p-2">Factory Price*</th>
+                        <th class="p-2">Sell Price*</th>
+                        <th class="p-2">Representative*</th>
+                        <th class="p-2">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rec in month_records %}
+                    <tr class="border-b">
+                        <td class="p-2">{{ rec[1].strftime('%Y-%m-%d') }}</td>
+                        <td class="p-2">{{ rec[2] }}</td>
+                        <td class="p-2">{{ rec[3] }}</td>
+                        <td class="p-2">{{ rec[4] }}</td>
+                        <td class="p-2">{{ rec[5] }}</td>
+                        <td class="p-2">{{ rec[6] }}</td>
+                        <td class="p-2">{{ rec[7] }}</td>
+                        <td class="p-2">{{ rec[8] }}</td>
+                        <td class="p-2">{{ rec[9] }}</td>
+                        <td class="p-2">{{ rec[10] }}</td>
+                        <td class="p-2">{{ rec[11] }}</td>
+                        <td class="p-2">
+                            <button type="button" class="edit-btn bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600" data-id="{{ rec[0] }}">
+                                Edit
+                            </button>
+                            <button type="button" class="save-btn bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 hidden" data-id="{{ rec[0] }}">
+                                Save
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
         </div>
     </div>
 
     <script>
-        // Build a map from truck number to owner from the server-provided 'trucks' list.
-        // 'trucks' is expected to be a list of [num, owner] pairs.
         const truckArr = {{ trucks|tojson }};
         const truckMap = {};
         truckArr.forEach(pair => {
             if (pair && pair.length >= 2) truckMap[String(pair[0])] = String(pair[1]);
         });
 
+        const suppliers = {{ suppliers|tojson }};
+        const factories = {{ factories|tojson }};
+        const zones = {{ zones|tojson }};
+        const representatives = {{ representatives|tojson }};
+
         const tbody = document.querySelector("#data-table tbody");
 
-        // Delegated listener: when a truck select changes, fill owner in the same row
         tbody.addEventListener('change', function(e) {
             const sel = e.target;
             if (sel && sel.matches('select[name="truck_num[]"]')) {
@@ -140,17 +177,14 @@
             }
         });
 
-        // Delegated listener: remove-row buttons
         tbody.addEventListener('click', function(e) {
             const btn = e.target;
             if (btn && btn.matches('.remove-row')) {
                 const row = btn.closest('tr');
-                // keep at least one row
                 const rows = tbody.querySelectorAll('tr');
                 if (rows.length > 1) {
                     row.remove();
                 } else {
-                    // if last row, just clear its fields
                     row.querySelectorAll('input, select').forEach(el => {
                         if (el.tagName === 'SELECT') el.selectedIndex = 0;
                         else el.value = '';
@@ -162,16 +196,112 @@
         function addRow() {
             const firstRow = tbody.rows[0];
             const newRow = firstRow.cloneNode(true);
-
-            // Clear inputs/selects
             newRow.querySelectorAll('input, select').forEach(el => {
                 if (el.tagName === 'SELECT') el.selectedIndex = 0;
                 else el.value = '';
             });
-
             tbody.appendChild(newRow);
-            // No need to attach handlers — we use event delegation on tbody
         }
+
+        document.addEventListener('click', function(e) {
+            // Edit mode
+            if (e.target.classList.contains('edit-btn')) {
+                const row = e.target.closest('tr');
+                const cells = row.querySelectorAll('td');
+
+                const columnNames = ["date", "truck_num", "truck_owner", "supplier", "factory", "zone", "weight", "ohda", "factory_price", "sell_price", "representative"];
+
+                cells.forEach((cell, idx) => {
+                    // We can now start from the first cell (idx 0)
+                    if (idx < 11) {
+                        const value = cell.innerText.trim();
+                        let newContent;
+
+                        switch(columnNames[idx]) {
+                            case "date":
+                                newContent = `<input type="date" name="date[]" class="border rounded px-1 w-full" value="${value}">`;
+                                break;
+                            case "truck_num":
+                                newContent = `<select name="truck_num[]" class="border rounded px-1 w-full">
+                                    <option value="">Select Truck</option>
+                                    ${truckArr.map(pair => `<option value="${pair[0]}" ${String(pair[0]) === value ? 'selected' : ''}>${pair[0]}</option>`).join('')}
+                                </select>`;
+                                break;
+                            case "supplier":
+                                newContent = `<select name="supplier[]" class="border rounded px-1 w-full">
+                                    <option value="">Select Supplier</option>
+                                    ${suppliers.map(sup => `<option value="${sup.supplier_name}" ${sup.supplier_name === value ? 'selected' : ''}>${sup.supplier_name}</option>`).join('')}
+                                </select>`;
+                                break;
+                            case "factory":
+                                newContent = `<select name="factory[]" class="border rounded px-1 w-full">
+                                    <option value="">Select Factory</option>
+                                    ${factories.map(fac => `<option value="${fac}" ${fac === value ? 'selected' : ''}>${fac}</option>`).join('')}
+                                </select>`;
+                                break;
+                            case "zone":
+                                newContent = `<select name="zone[]" class="border rounded px-1 w-full">
+                                    <option value="">Select Zone</option>
+                                    ${zones.map(z => `<option value="${z}" ${z === value ? 'selected' : ''}>${z}</option>`).join('')}
+                                </select>`;
+                                break;
+                            case "representative":
+                                newContent = `<select name="representative[]" class="border rounded px-1 w-full">
+                                    <option value="">Select Representative</option>
+                                    ${representatives.map(pair => `<option value="${pair[0]}" ${pair[0] === value ? 'selected' : ''}>${pair[0]}</option>`).join('')}
+                                </select>`;
+                                break;
+                            case "truck_owner":
+                                newContent = `<input type="text" name="truck_owner[]" class="border rounded px-1 w-full bg-gray-100" value="${value}" readonly>`;
+                                break;
+                            default:
+                                newContent = `<input type="number" name="${columnNames[idx]}[]" step="any" class="border rounded px-1 w-full" value="${value}">`;
+                                break;
+                        }
+                        cell.innerHTML = newContent;
+                    }
+                });
+
+                e.target.classList.add('hidden');
+                row.querySelector('.save-btn').classList.remove('hidden');
+            }
+
+            // Save mode
+            if (e.target.classList.contains('save-btn')) {
+                const row = e.target.closest('tr');
+                const id = e.target.getAttribute('data-id');
+                const cells = row.querySelectorAll('td');
+                const data = { id: id };
+                
+                const columnNames = ["date", "truck_num", "truck_owner", "supplier", "factory", "zone", "weight", "ohda", "factory_price", "sell_price", "representative"];
+                
+                cells.forEach((cell, idx) => {
+                    const inputElement = cell.querySelector('input, select');
+                    if (inputElement) {
+                        data[columnNames[idx]] = inputElement.value;
+                        if (inputElement.tagName === 'SELECT') {
+                            cell.innerHTML = inputElement.options[inputElement.selectedIndex].text;
+                        } else {
+                            cell.innerHTML = inputElement.value;
+                        }
+                    }
+                });
+
+                fetch('/update_record', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                }).then(res => res.json())
+                .then(res => {
+                    if (res.success) {
+                        e.target.classList.add('hidden');
+                        row.querySelector('.edit-btn').classList.remove('hidden');
+                    } else {
+                        alert('Error saving changes.');
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>

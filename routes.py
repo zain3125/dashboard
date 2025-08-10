@@ -1,6 +1,6 @@
 from flask import (
     render_template, request, redirect, url_for,
-    send_file, flash, session, abort
+    send_file, flash, session, abort, jsonify
 )
 from functools import wraps
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -10,7 +10,8 @@ from utils import (
     search_suppliers, insert_zone, fetch_all_zones, search_zones, insert_factory,
     fetch_all_factories, insert_representative, fetch_all_representatives,
     get_user_by_username, update_user_password, get_all_users, get_custody_by_user_id,
-    fetch_all_trucks_with_owners, save_data_entry
+    fetch_all_trucks_with_owners, save_data_entry, update_naqla_record,
+    get_current_month_records
 )
 
 # ========================
@@ -73,32 +74,74 @@ def register_routes(app):
     @app.route("/data-entry", methods=["GET", "POST"])
     def data_entry():
         if request.method == "POST":
-            data = {
-                "dates": request.form.getlist("date[]"),
-                "truck_nums": request.form.getlist("truck_num[]"),
-                "truck_owners": request.form.getlist("truck_owner[]"),
-                "suppliers": request.form.getlist("supplier[]"),
-                "factories_list": request.form.getlist("factory[]"),
-                "zones_list": request.form.getlist("zone[]"),
-                "weights": request.form.getlist("weight[]"),
-                "ohdas": request.form.getlist("ohda[]"),
-                "factory_prices": request.form.getlist("factory_price[]"),
-                "sell_prices": request.form.getlist("sell_price[]"),
-                "representatives_list": request.form.getlist("representative[]")
-            }
+            # لو فيه naqla_id يبقى تعديل
+            naqla_ids = request.form.getlist("naqla_id[]")
+            
+            if any(naqla_ids):
+                # تعديل سجل واحد أو أكثر
+                for i, naqla_id in enumerate(naqla_ids):
+                    if naqla_id:  # تعديل
+                        data = {
+                            "date": request.form.getlist("date[]")[i],
+                            "truck_num": request.form.getlist("truck_num[]")[i],
+                            "truck_owner": request.form.getlist("truck_owner[]")[i],
+                            "supplier": request.form.getlist("supplier[]")[i],
+                            "factory": request.form.getlist("factory[]")[i],
+                            "zone": request.form.getlist("zone[]")[i],
+                            "weight": request.form.getlist("weight[]")[i],
+                            "ohda": request.form.getlist("ohda[]")[i],
+                            "factory_price": request.form.getlist("factory_price[]")[i],
+                            "sell_price": request.form.getlist("sell_price[]")[i],
+                            "representative": request.form.getlist("representative[]")[i]
+                        }
+                        update_naqla_record(naqla_id, data)
+                    else:
+                        # إضافة سجل جديد
+                        data = {
+                            "dates": [request.form.getlist("date[]")[i]],
+                            "truck_nums": [request.form.getlist("truck_num[]")[i]],
+                            "truck_owners": [request.form.getlist("truck_owner[]")[i]],
+                            "suppliers": [request.form.getlist("supplier[]")[i]],
+                            "factories_list": [request.form.getlist("factory[]")[i]],
+                            "zones_list": [request.form.getlist("zone[]")[i]],
+                            "weights": [request.form.getlist("weight[]")[i]],
+                            "ohdas": [request.form.getlist("ohda[]")[i]],
+                            "factory_prices": [request.form.getlist("factory_price[]")[i]],
+                            "sell_prices": [request.form.getlist("sell_price[]")[i]],
+                            "representatives_list": [request.form.getlist("representative[]")[i]]
+                        }
+                        save_data_entry(data)
 
-            if save_data_entry(data):
-                flash("✅ تم حفظ البيانات بنجاح!", "success")
+                flash("✅ تم حفظ/تعديل البيانات بنجاح!", "success")
             else:
-                flash("❌ حدث خطأ أثناء حفظ البيانات", "error")
+                # إدخال بيانات جديدة بالكامل
+                data = {
+                    "dates": request.form.getlist("date[]"),
+                    "truck_nums": request.form.getlist("truck_num[]"),
+                    "truck_owners": request.form.getlist("truck_owner[]"),
+                    "suppliers": request.form.getlist("supplier[]"),
+                    "factories_list": request.form.getlist("factory[]"),
+                    "zones_list": request.form.getlist("zone[]"),
+                    "weights": request.form.getlist("weight[]"),
+                    "ohdas": request.form.getlist("ohda[]"),
+                    "factory_prices": request.form.getlist("factory_price[]"),
+                    "sell_prices": request.form.getlist("sell_price[]"),
+                    "representatives_list": request.form.getlist("representative[]")
+                }
+                if save_data_entry(data):
+                    flash("✅ تم حفظ البيانات بنجاح!", "success")
+                else:
+                    flash("❌ حدث خطأ أثناء حفظ البيانات", "error")
 
             return redirect(url_for("data_entry"))
 
+        # عرض الصفحة مع جدول السجلات الحالية
         trucks = fetch_all_trucks_with_owners()
         suppliers, _ = fetch_all_suppliers(limit=100, offset=0)
         factories, _ = fetch_all_factories(page=1, per_page=100, query="")
         zones, _ = fetch_all_zones(limit=100, offset=0)
         representatives, _ = fetch_all_representatives(page=1, per_page=100)
+        month_records = get_current_month_records()  # من utils
 
         return render_template(
             "data_entry.html",
@@ -106,13 +149,31 @@ def register_routes(app):
             suppliers=suppliers,
             factories=factories,
             zones=zones,
-            representatives=representatives
+            representatives=representatives,
+            month_records=month_records
         )
 
     @app.route("/dashboard/dimension-tables")
     @login_required
     def dimension_tables():
         return render_template("dimension_tables.html")
+    
+    @app.route('/update_record', methods=['POST'])
+    @login_required
+    def update_record_route():
+        """
+        Handles the AJAX request to update a single record.
+        This is a new, dedicated route for the edit/save functionality.
+        """
+        data = request.json
+        naqla_id = data.get('id')
+        if not naqla_id:
+            return jsonify({'success': False, 'error': 'No ID provided'})
+        
+        # Call the corrected update function from utils.py
+        response = update_naqla_record(naqla_id, data)
+        return jsonify(response)
+
 
     # 🚚 Truck Owners
     @app.route("/dashboard/dimension-tables/add-truck-owner", methods=['GET', 'POST'])
