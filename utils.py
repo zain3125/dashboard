@@ -10,7 +10,7 @@ from db import PG_PARAMS
 SAVEING_PATH = "exports"
 
 # =======================================================
-# الدوال العامة
+# General functions
 # =======================================================
 
 # User management functions
