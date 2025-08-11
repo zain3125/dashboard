@@ -273,6 +273,7 @@ class BaseTableManager:
         self.name_column = name_column
 
     def get_conn(self):
+        # Your connection logic
         return psycopg2.connect(**PG_PARAMS)
 
     def fetch_all_records(self, limit=10, offset=0, query=""):
@@ -297,7 +298,7 @@ class BaseTableManager:
         except Exception as e:
             print(f"Error fetching records from {self.table_name}: {e}")
             return [], 0
-
+            
     def search_records(self, query):
         try:
             conn = self.get_conn()
@@ -377,8 +378,8 @@ class TruckOwnerManager(BaseTableManager):
                 FROM trucks t
                 JOIN truck_owners o ON t.owner_id = o.owner_id
                 WHERE t.truck_num ILIKE %s
-                   OR o.owner_name ILIKE %s
-                   OR o.phone ILIKE %s
+                    OR o.owner_name ILIKE %s
+                    OR o.phone ILIKE %s
                 ORDER BY t.truck_num
             """, (f"%{query}%", f"%{query}%", f"%{query}%"))
             rows = cur.fetchall()
@@ -422,7 +423,7 @@ class TruckOwnerManager(BaseTableManager):
             owner_id = truck_row[0]
             cur.execute("UPDATE truck_owners SET owner_name = %s, phone = %s WHERE owner_id = %s", (new_owner_name, new_phone, owner_id))
             if original_truck_num != new_truck_num:
-                 cur.execute("UPDATE trucks SET truck_num = %s WHERE truck_num = %s", (new_truck_num, original_truck_num))
+                cur.execute("UPDATE trucks SET truck_num = %s WHERE truck_num = %s", (new_truck_num, original_truck_num))
             conn.commit()
             cur.close()
             conn.close()
