@@ -5,12 +5,13 @@ from flask import (
 )
 from functools import wraps
 from werkzeug.security import check_password_hash, generate_password_hash
-from utils import (
-    export_transactions_to_excel, fetch_transactions_from_db,
-    get_user_by_username, update_user_password, get_all_users, get_custody_by_user_id,
-    save_data_entry, update_naqla_record, get_current_month_records,
-    TruckOwnerManager, SupplierManager, ZoneManager, FactoryManager, RepresentativeManager
-)
+
+from user_service import get_user_by_username, update_user_password, get_all_users
+from custody_service import get_custody_by_user_id
+from transaction_service import export_transactions_to_excel, fetch_transactions_from_db
+from main_data_manager import save_data_entry, update_naqla_record, get_current_month_records
+from table_managers import (
+    TruckOwnerManager, SupplierManager, ZoneManager,FactoryManager, RepresentativeManager)
 
 # ========================
 # Class Instances
