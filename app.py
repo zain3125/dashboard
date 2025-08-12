@@ -1,5 +1,5 @@
 from flask import Flask
-from routes import register_routes
+from routes.routes import register_routes
 
 app = Flask(__name__)
 app.secret_key = "glsominoo2406"

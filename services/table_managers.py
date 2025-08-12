@@ -15,7 +15,6 @@ class BaseTableManager:
         try:
             conn = self.get_conn()
             cur = conn.cursor()
-
             if query:
                 cur.execute(f"SELECT {self.name_column} FROM {self.table_name} WHERE {self.name_column} ILIKE %s ORDER BY {self.name_column}", (f"%{query}%",))
                 rows = cur.fetchall()
@@ -25,7 +24,6 @@ class BaseTableManager:
                 total_count = cur.fetchone()[0]
                 cur.execute(f"SELECT {self.name_column} FROM {self.table_name} ORDER BY {self.name_column} LIMIT %s OFFSET %s", (limit, offset))
                 rows = cur.fetchall()
-            
             cur.close()
             conn.close()
             records = [row[0] for row in rows]
@@ -33,7 +31,7 @@ class BaseTableManager:
         except Exception as e:
             print(f"Error fetching records from {self.table_name}: {e}")
             return [], 0
-            
+
     def search_records(self, query):
         try:
             conn = self.get_conn()
@@ -46,6 +44,41 @@ class BaseTableManager:
         except Exception as e:
             print(f"Error searching {self.table_name}: {e}")
             return []
+
+    def update_record(self, record_id, new_data):
+        try:
+            conn = self.get_conn()
+            cur = conn.cursor()
+            set_clause = ', '.join([f"{key} = %s" for key in new_data.keys()])
+            values = list(new_data.values())
+            values.append(record_id)
+            sql_query = f"UPDATE {self.table_name} SET {set_clause} WHERE {self.id_column} = %s"
+            cur.execute(sql_query, tuple(values))
+            conn.commit()
+            cur.close()
+            conn.close()
+            return {'success': True}
+        except Exception as e:
+            print(f"Error updating record in {self.table_name}: {e}")
+            if conn:
+                conn.rollback()
+            return {'success': False, 'error': str(e)}
+
+    def delete_record(self, record_id):
+        try:
+            conn = self.get_conn()
+            cur = conn.cursor()
+            sql_query = f"DELETE FROM {self.table_name} WHERE {self.id_column} = %s"
+            cur.execute(sql_query, (record_id,))
+            conn.commit()
+            cur.close()
+            conn.close()
+            return {'success': True}
+        except Exception as e:
+            print(f"Error deleting record from {self.table_name}: {e}")
+            if conn:
+                conn.rollback()
+            return {'success': False, 'error': str(e)}
 
 class TruckOwnerManager(BaseTableManager):
     def __init__(self):
@@ -97,7 +130,7 @@ class TruckOwnerManager(BaseTableManager):
         except Exception as e:
             print(f"Error fetching truck owners: {e}")
             return [], 0
-            
+
     def search(self, query):
         try:
             conn = self.get_conn()
@@ -161,6 +194,9 @@ class TruckOwnerManager(BaseTableManager):
             print(f"Error updating truck owner: {e}")
             conn.rollback()
             return {'success': False, 'error': str(e)}
+
+    def delete_record(self, truck_num):
+        return super().delete_record(truck_num)
 
 class SupplierManager(BaseTableManager):
     def __init__(self):
