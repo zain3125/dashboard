@@ -88,7 +88,6 @@
                                     {% endfor %}
                                 </select>
                             </td>
-
                             <td class="p-2 text-center">
                                 <button type="button" class="remove-row text-red-500 hover:text-red-700">🗑</button>
                             </td>
@@ -121,6 +120,7 @@
                         <th class="p-2">Sell Price*</th>
                         <th class="p-2">Representative*</th>
                         <th class="p-2">Actions</th>
+                        <th class="p-2"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -144,6 +144,30 @@
                             <button type="button" class="save-btn bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 hidden" data-id="{{ rec[0] }}">
                                 Save
                             </button>
+                        </td>
+                        <td class="p-2">
+                            <button 
+                                class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                                onclick="openModal('{{ rec[0] }}')">
+                                Delete
+                            </button>
+                            <div id="deleteModal" class="fixed inset-0 hidden bg-gray-900 bg-opacity-50 flex items-center justify-center">
+                                <div class="bg-white rounded-lg shadow-lg p-6 w-96">
+                                    <h2 class="text-lg font-bold mb-4">Confirm deletion</h2>
+                                    <p class="mb-6">Are you sure?</p>
+                                    <div class="flex justify-end gap-3">
+                                        <button onclick="closeModal()" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
+                                            cancel
+                                        </button>
+                                        <form method="POST">
+                                            <input type="hidden" name="delete_id" id="deleteId">
+                                            <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -212,7 +236,6 @@
                 const columnNames = ["date", "truck_num", "truck_owner", "supplier", "factory", "zone", "weight", "ohda", "factory_price", "sell_price", "representative"];
 
                 cells.forEach((cell, idx) => {
-                    // We can now start from the first cell (idx 0)
                     if (idx < 11) {
                         const value = cell.innerText.trim();
                         let newContent;
@@ -276,13 +299,15 @@
                 const columnNames = ["date", "truck_num", "truck_owner", "supplier", "factory", "zone", "weight", "ohda", "factory_price", "sell_price", "representative"];
                 
                 cells.forEach((cell, idx) => {
-                    const inputElement = cell.querySelector('input, select');
-                    if (inputElement) {
-                        data[columnNames[idx]] = inputElement.value;
-                        if (inputElement.tagName === 'SELECT') {
-                            cell.innerHTML = inputElement.options[inputElement.selectedIndex].text;
-                        } else {
-                            cell.innerHTML = inputElement.value;
+                    if (idx < 11) {
+                        const inputElement = cell.querySelector('input, select');
+                        if (inputElement) {
+                            data[columnNames[idx]] = inputElement.value;
+                            if (inputElement.tagName === 'SELECT') {
+                                cell.innerHTML = inputElement.options[inputElement.selectedIndex].text;
+                            } else {
+                                cell.innerHTML = inputElement.value;
+                            }
                         }
                     }
                 });
@@ -302,6 +327,15 @@
                 });
             }
         });
+
+        function openModal(id) {
+            document.getElementById('deleteId').value = id;
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
+        function closeModal() {
+            document.getElementById('deleteModal').classList.add('hidden');
+        }
     </script>
+
 </body>
 </html>

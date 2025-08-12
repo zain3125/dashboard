@@ -9,10 +9,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from user_service import get_user_by_username, update_user_password, get_all_users
 from custody_service import get_custody_by_user_id
 from transaction_service import export_transactions_to_excel, fetch_transactions_from_db
-from main_data_manager import save_data_entry, update_naqla_record, get_current_month_records
-from table_managers import (
-    TruckOwnerManager, SupplierManager, ZoneManager,FactoryManager, RepresentativeManager)
-
+from main_data_manager import save_data_entry, update_naqla_record, get_current_month_records, delete_naqla_record
+from table_managers import TruckOwnerManager, SupplierManager, ZoneManager,FactoryManager, RepresentativeManager
 # ========================
 # Class Instances
 # ========================
@@ -80,8 +78,19 @@ def register_routes(app):
     @app.route("/data-entry", methods=["GET", "POST"])
     def data_entry():
         if request.method == "POST":
+
+            # ✅ تحقق إذا كان طلب حذف
+            delete_id = request.form.get("delete_id")
+            if delete_id:
+                result = delete_naqla_record(delete_id)
+                if result['success']:
+                    flash("🗑️ تم حذف السجل بنجاح!", "success")
+                else:
+                    flash(f"❌ فشل الحذف: {result['error']}", "error")
+                return redirect(url_for("data_entry"))
+
+            # ✅ باقي الأكواد لحفظ/تعديل البيانات
             naqla_ids = request.form.getlist("naqla_id[]")
-            
             if any(naqla_ids):
                 for i, naqla_id in enumerate(naqla_ids):
                     if naqla_id:

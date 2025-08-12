@@ -147,3 +147,21 @@ def update_naqla_record(naqla_id, data):
         print(f"Error updating record: {e}")
         conn.rollback()
         return {'success': False, 'error': str(e)}
+
+def delete_naqla_record(naqla_id):
+    try:
+        conn = psycopg2.connect(**PG_PARAMS)
+        cur = conn.cursor()
+
+        cur.execute("DELETE FROM main WHERE naqla_id = %s", (naqla_id,))
+        conn.commit()
+
+        cur.close()
+        conn.close()
+        return {'success': True}
+
+    except Exception as e:
+        print(f"Error deleting record: {e}")
+        if conn:
+            conn.rollback()
+        return {'success': False, 'error': str(e)}
