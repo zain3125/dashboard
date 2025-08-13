@@ -9,7 +9,6 @@
   <div class="header">
     <h1>Add Factory</h1>
   </div>
-
   <div class="page-container">
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -36,40 +35,43 @@
         </div>
       </form>
     </div>
-
+    
     <div class="table-card">
       <h3>All Factories</h3>
-
-      <form method="GET" action="{{ url_for('add_factory') }}">
-        <input type="text" name="query" class="search-input" placeholder="🔍 Search by factory name..." value="{{ request.args.get('query', '') }}">
+      <form method="GET" action="{{ url_for('add_factory') }}" class="search-form">
+        <input type="text" name="query" id="searchInput" class="search-input" placeholder="🔍 Search by name..." value="{{ request.args.get('query', '') }}">
         <button type="submit">Search</button>
       </form>
-
       <table>
         <thead>
           <tr>
             <th>Factory Name</th>
+            <th>Actions</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="factoryTable">
           {% for row in factories %}
-          <tr><td>{{ row }}</td></tr>
+          <tr data-factory-name="{{ row }}">
+            <td data-field="factory_name">{{ row }}</td>
+            <td class="actions-cell">
+              <button type="button" class="edit-btn">Edit</button>
+              <button type="button" class="delete-btn">Delete</button>
+            </td>
+          </tr>
           {% endfor %}
         </tbody>
       </table>
-
-      {% if not request.args.get('query') %}
       <div class="pagination">
         {% if page > 1 %}
-          <a href="{{ url_for('add_factory', page=page-1) }}">« Previous</a>
+          <a href="{{ url_for('add_factory', page=page-1) }}">⬅ Previous</a>
         {% endif %}
         <span>Page {{ page }} of {{ total_pages }}</span>
         {% if page < total_pages %}
-          <a href="{{ url_for('add_factory', page=page+1) }}">Next »</a>
+          <a href="{{ url_for('add_factory', page=page+1) }}">Next ➡</a>
         {% endif %}
       </div>
-      {% endif %}
     </div>
   </div>
+  <script src="{{ url_for('static', filename='scripts/add_factory.js') }}"></script>
 </body>
 </html>

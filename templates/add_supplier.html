@@ -9,7 +9,6 @@
   <div class="header">
     <h1>Add Supplier</h1>
   </div>
-
   <div class="page-container">
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -22,7 +21,6 @@
     {% endwith %}
     <a class="back-link" href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
 
-    <!-- Form to Add New Supplier -->
     <div class="form-card">
       <h3>Add New Supplier</h3>
       <form method="POST">
@@ -41,47 +39,45 @@
         </div>
       </form>
     </div>
-
-    <!-- Table of All Suppliers -->
+    
     <div class="table-card">
       <h3>All Suppliers</h3>
-
-      <!-- Search Form -->
       <form method="GET" action="{{ url_for('add_supplier') }}" class="search-form">
         <input type="text" name="query" id="searchInput" class="search-input" placeholder="🔍 Search by name or phone..." value="{{ request.args.get('query', '') }}">
         <button type="submit">Search</button>
       </form>
-
       <table>
         <thead>
           <tr>
             <th>Supplier Name</th>
             <th>Phone Number</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody id="supplierTable">
           {% for row in suppliers %}
-          <tr>
-            <td>{{ row.supplier_name }}</td>
-            <td>{{ row.phone_number }}</td>
+          <tr data-supplier-name="{{ row.supplier_name }}">
+            <td data-field="supplier_name">{{ row.supplier_name }}</td>
+            <td data-field="phone">{{ row.phone_number }}</td>
+            <td class="actions-cell">
+              <button type="button" class="edit-btn">Edit</button>
+              <button type="button" class="delete-btn">Delete</button>
+            </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
-
-      <!-- Pagination -->
       <div class="pagination">
         {% if page > 1 %}
-          <a href="{{ url_for('add_supplier', page=page-1, query=request.args.get('query', '')) }}">⬅ Previous</a>
+          <a href="{{ url_for('add_supplier', page=page-1) }}">⬅ Previous</a>
         {% endif %}
-
         <span>Page {{ page }} of {{ total_pages }}</span>
-
         {% if page < total_pages %}
-          <a href="{{ url_for('add_supplier', page=page+1, query=request.args.get('query', '')) }}">Next ➡</a>
+          <a href="{{ url_for('add_supplier', page=page+1) }}">Next ➡</a>
         {% endif %}
       </div>
     </div>
   </div>
+  <script src="{{ url_for('static', filename='scripts/add_supplier.js') }}"></script>
 </body>
 </html>

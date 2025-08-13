@@ -70,30 +70,17 @@ def register_dimension_routes(app):
         response = truck_owner_manager.update_record(original_truck_num, new_data)
         return jsonify(response)
 
-    # 🏭 Factories
-    @app.route("/dashboard/dimension-tables/add-factory", methods=['GET', 'POST'])
+    @app.route('/delete_truck_owner', methods=['POST'])
     @login_required
-    def add_factory():
-        PER_PAGE = 10
-        query = request.args.get("query", "").strip()
-        page = int(request.args.get("page", 1))
-        if request.method == 'POST':
-            factory_name = request.form.get('factory_name', '').strip()
-            if not factory_name:
-                flash("❌ أدخل اسم المصنع", "error")
-                return redirect(url_for('add_factory'))
-            result = factory_manager.insert_record(factory_name)
-            if result == "inserted":
-                flash("✅ تم إضافة المصنع بنجاح", "success")
-            elif result == "exists":
-                flash("⚠️ المصنع موجود بالفعل", "warning")
-            else:
-                flash("❌ حدث خطأ أثناء إضافة المصنع", "error")
-            return redirect(url_for('add_factory', page=page))
-        factories, total_pages = factory_manager.fetch_all(page, PER_PAGE, query)
-        return render_template("add_factory.html", factories=factories, page=page, total_pages=total_pages)
+    def delete_truck_owner_route():
+        data = request.json
+        truck_num = data.get('truck_num')
+        if not truck_num:
+            return jsonify({'success': False, 'error': 'No truck number provided'})
+        response = truck_owner_manager.delete_record(truck_num)
+        return jsonify(response)
 
-    # 📦 Suppliers
+    # 📦 Suppliers Routes
     @app.route("/dashboard/dimension-tables/add-supplier", methods=['GET', 'POST'])
     @login_required
     def add_supplier():
@@ -125,7 +112,78 @@ def register_dimension_routes(app):
             flash("❌ حدث خطأ أثناء معالجة الطلب", "error")
             return redirect(url_for("add_supplier"))
 
-    # 📍 Zones
+    @app.route('/update_supplier', methods=['POST'])
+    @login_required
+    def update_supplier_route():
+        data = request.json
+        original_supplier_name = data.get('id')
+        new_data = {
+            'new_supplier_name': data.get('supplier_name'),
+            'new_phone': data.get('phone')
+        }
+        if not original_supplier_name:
+            return jsonify({'success': False, 'error': 'No original supplier name provided'})
+        response = supplier_manager.update_record(original_supplier_name, new_data)
+        return jsonify(response)
+    
+    @app.route('/delete_supplier', methods=['POST'])
+    @login_required
+    def delete_supplier_route():
+        data = request.json
+        supplier_name = data.get('supplier_name')
+        if not supplier_name:
+            return jsonify({'success': False, 'error': 'No supplier name provided'})
+        
+        response = supplier_manager.delete_record(supplier_name)
+        return jsonify(response)
+
+    # 🏭 Factory Routes
+    @app.route("/dashboard/dimension-tables/add-factory", methods=['GET', 'POST'])
+    @login_required
+    def add_factory():
+        PER_PAGE = 10
+        query = request.args.get("query", "").strip()
+        page = int(request.args.get("page", 1))
+        if request.method == 'POST':
+            factory_name = request.form.get('factory_name', '').strip()
+            if not factory_name:
+                flash("❌ أدخل اسم المصنع", "error")
+                return redirect(url_for('add_factory'))
+            result = factory_manager.insert_record(factory_name)
+            if result == "inserted":
+                flash("✅ تم إضافة المصنع بنجاح", "success")
+            elif result == "exists":
+                flash("⚠️ المصنع موجود بالفعل", "warning")
+            else:
+                flash("❌ حدث خطأ أثناء إضافة المصنع", "error")
+            return redirect(url_for('add_factory', page=page))
+        factories, total_pages = factory_manager.fetch_all(page, PER_PAGE, query)
+        return render_template("add_factory.html", factories=factories, page=page, total_pages=total_pages)
+
+    @app.route('/update_factory', methods=['POST'])
+    @login_required
+    def update_factory_route():
+        data = request.json
+        original_factory_name = data.get('id')
+        new_factory_name = data.get('factory_name')
+        if not original_factory_name:
+            return jsonify({'success': False, 'error': 'No original factory name provided'})
+        
+        response = factory_manager.update_record(original_factory_name, {'new_factory_name': new_factory_name})
+        return jsonify(response)
+    
+    @app.route('/delete_factory', methods=['POST'])
+    @login_required
+    def delete_factory_route():
+        data = request.json
+        factory_name = data.get('factory_name')
+        if not factory_name:
+            return jsonify({'success': False, 'error': 'No factory name provided'})
+        
+        response = factory_manager.delete_record(factory_name)
+        return jsonify(response)
+
+    # 📍 Zone Routes
     @app.route("/dashboard/dimension-tables/add-zone", methods=['GET', 'POST'])
     @login_required
     def add_zone():
@@ -156,7 +214,31 @@ def register_dimension_routes(app):
             flash("❌ حدث خطأ أثناء معالجة الطلب", "error")
             return redirect(url_for("add_zone"))
 
-    # 👨‍💼 Representatives
+    @app.route('/update_zone', methods=['POST'])
+    @login_required
+    def update_zone_route():
+        data = request.json
+        original_zone_name = data.get('id')
+        new_zone_name = data.get('zone_name')
+        if not original_zone_name:
+            return jsonify({'success': False, 'error': 'No original zone name provided'})
+        
+        response = zone_manager.update_record(original_zone_name, {'new_zone_name': new_zone_name})
+        return jsonify(response)
+    
+    @app.route('/delete_zone', methods=['POST'])
+    @login_required
+    def delete_zone_route():
+        data = request.json
+        zone_name = data.get('zone_name')
+        if not zone_name:
+            return jsonify({'success': False, 'error': 'No zone name provided'})
+        
+        response = zone_manager.delete_record(zone_name)
+        return jsonify(response)
+
+
+    # 👨‍💼 Representative Routes
     @app.route("/dashboard/dimension-tables/add-representative", methods=['GET', 'POST'])
     @login_required
     def add_representative():
@@ -179,3 +261,26 @@ def register_dimension_routes(app):
             return redirect(url_for('add_representative', page=page))
         representatives, total_pages = representative_manager.fetch_all(page, PER_PAGE, query)
         return render_template("add_representative.html", representatives=representatives, page=page, total_pages=total_pages)
+
+    @app.route('/update_representative', methods=['POST'])
+    @login_required
+    def update_representative_route():
+        data = request.json
+        original_representative_name = data.get('id')
+        new_representative_name = data.get('representative_name')
+        if not original_representative_name:
+            return jsonify({'success': False, 'error': 'No original representative name provided'})
+        
+        response = representative_manager.update_record(original_representative_name, {'new_representative_name': new_representative_name})
+        return jsonify(response)
+    
+    @app.route('/delete_representative', methods=['POST'])
+    @login_required
+    def delete_representative_route():
+        data = request.json
+        representative_id = data.get('representative_id')
+        if not representative_id:
+            return jsonify({'success': False, 'error': 'No representative ID provided'})
+        
+        response = representative_manager.delete_record(representative_id)
+        return jsonify(response)

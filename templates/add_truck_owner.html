@@ -2,8 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Add Truck Owner</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    /* style.css might already have this, but for clarity */
+    .edit-mode input {
+      width: 100%;
+      box-sizing: border-box;
+    }
+  </style>
 </head>
 <body>
   <div class="header">
@@ -21,7 +29,6 @@
     {% endwith %}
     <a class="back-link" href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
 
-    <!-- Top Form -->
     <div class="form-card">
       <h3>Add New Truck Owner</h3>
         <form method="POST">
@@ -45,8 +52,7 @@
         </form>
 
     </div>
-    <!-- Table and Search -->
-      <div class="table-card">
+    <div class="table-card">
         <h3>All Truck Owners</h3>
           <form method="GET" action="{{ url_for('add_truck_owner') }}" class="search-form">
             <input type="text" name="query" id="searchInput" class="search-input" placeholder="🔍 Search by truck number, owner or phone..." value="{{ request.args.get('query', '') }}">
@@ -57,15 +63,24 @@
             <tr>
               <th>Truck Number</th>
               <th>Truck Owner</th>
-              <th>Phone Number</th> <!-- جديد -->
+              <th>Phone Number</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody id="truckTable">
             {% for row in truck_owners %}
-            <tr>
-              <td>{{ row.truck_number }}</td>
-              <td>{{ row.truck_owner }}</td>
-              <td>{{ row.phone_number }}</td> <!-- جديد -->
+            <tr data-truck-num="{{ row.truck_number }}">
+              <td data-field="truck_num">{{ row.truck_number }}</td>
+              <td data-field="owner_name">{{ row.truck_owner }}</td>
+              <td data-field="phone">{{ row.phone_number }}</td>
+              <td class="actions-cell">
+                <button type="button" class="edit-btn">
+                  Edit
+                </button>
+                <button type="button" class="delete-btn">
+                  Delete
+                </button>
+              </td>
             </tr>
             {% endfor %}
           </tbody>
@@ -83,5 +98,6 @@
       </div>
     </div>
   </div>
+  <script src="{{ url_for('static', filename='scripts/add_truck_owner.js') }}"></script>
 </body>
 </html>

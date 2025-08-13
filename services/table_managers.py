@@ -195,6 +195,41 @@ class TruckOwnerManager(BaseTableManager):
             conn.rollback()
             return {'success': False, 'error': str(e)}
 
+    def update_record(self, original_truck_num, new_data):
+        try:
+            conn = self.get_conn()
+            cur = conn.cursor()
+            new_truck_num = new_data.get('new_truck_num')
+            new_owner_name = new_data.get('new_owner_name')
+            new_phone = new_data.get('new_phone')
+            
+            # Find the owner_id associated with the truck
+            cur.execute("SELECT owner_id FROM trucks WHERE truck_num = %s", (original_truck_num,))
+            truck_row = cur.fetchone()
+            
+            if not truck_row:
+                conn.rollback()
+                return {'success': False, 'error': 'Truck not found.'}
+            
+            owner_id = truck_row[0]
+            
+            # Update the owner's details
+            cur.execute("UPDATE truck_owners SET owner_name = %s, phone = %s WHERE owner_id = %s", (new_owner_name, new_phone, owner_id))
+            
+            # If the truck number itself has changed, update it as well
+            if original_truck_num != new_truck_num:
+                cur.execute("UPDATE trucks SET truck_num = %s WHERE truck_num = %s", (new_truck_num, original_truck_num))
+            
+            conn.commit()
+            cur.close()
+            conn.close()
+            return {'success': True}
+        except Exception as e:
+            print(f"Error updating truck owner: {e}")
+            if 'conn' in locals() and conn:
+                conn.rollback()
+            return {'success': False, 'error': str(e)}    
+
     def delete_record(self, truck_num):
         return super().delete_record(truck_num)
 
@@ -247,6 +282,46 @@ class SupplierManager(BaseTableManager):
             print(f"Error searching suppliers: {e}")
             return []
 
+    def update_record(self, original_supplier_name, new_data):
+        try:
+            conn = self.get_conn()
+            cur = conn.cursor()
+            
+            new_supplier_name = new_data.get('new_supplier_name')
+            new_phone = new_data.get('new_phone')
+
+            # Update the supplier_name and phone where supplier_name matches the original name
+            cur.execute("""
+                UPDATE suppliers 
+                SET supplier_name = %s, phone = %s 
+                WHERE supplier_name = %s
+            """, (new_supplier_name, new_phone, original_supplier_name))
+            
+            conn.commit()
+            cur.close()
+            conn.close()
+            return {'success': True}
+        except Exception as e:
+            print(f"Error updating supplier: {e}")
+            if 'conn' in locals():
+                conn.rollback()
+            return {'success': False, 'error': str(e)}
+
+    def delete_record(self, supplier_name):
+        try:
+            conn = self.get_conn()
+            cur = conn.cursor()
+            cur.execute("DELETE FROM suppliers WHERE supplier_name = %s", (supplier_name,))
+            conn.commit()
+            cur.close()
+            conn.close()
+            return {'success': True}
+        except Exception as e:
+            print(f"Error deleting supplier: {e}")
+            if 'conn' in locals():
+                conn.rollback()
+            return {'success': False, 'error': str(e)}
+
 class ZoneManager(BaseTableManager):
     def __init__(self):
         super().__init__("zones", "zone_id", "zone_name")
@@ -269,6 +344,37 @@ class ZoneManager(BaseTableManager):
         except Exception as e:
             print(f"Error inserting zone: {e}")
             return None
+    
+    def update_record(self, record_id, new_data):
+        try:
+            conn = self.get_conn()
+            cursor = conn.cursor()
+            new_zone_name = new_data.get('new_zone_name')
+            cursor.execute("UPDATE zones SET zone_name = %s WHERE zone_name = %s", (new_zone_name, record_id))
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return {'success': True}
+        except Exception as e:
+            print(f"Error updating zone: {e}")
+            if 'conn' in locals():
+                conn.rollback()
+            return {'success': False, 'error': str(e)}
+    
+    def delete_record(self, record_id):
+        try:
+            conn = self.get_conn()
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM zones WHERE zone_name = %s", (record_id,))
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return {'success': True}
+        except Exception as e:
+            print(f"Error deleting zone: {e}")
+            if 'conn' in locals():
+                conn.rollback()
+            return {'success': False, 'error': str(e)}
 
 class FactoryManager(BaseTableManager):
     def __init__(self):
@@ -318,6 +424,39 @@ class FactoryManager(BaseTableManager):
         cursor.close()
         conn.close()
         return factories, total_pages
+
+    def update_record(self, original_factory_name, new_data):
+        try:
+            conn = self.get_conn()
+            cursor = conn.cursor()
+            new_factory_name = new_data.get('new_factory_name')
+            cursor.execute("UPDATE factories SET factory_name = %s WHERE factory_name = %s", (new_factory_name, original_factory_name))
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return {'success': True}
+        except Exception as e:
+            print(f"Error updating factory: {e}")
+            if 'conn' in locals():
+                conn.rollback()
+            return {'success': False, 'error': str(e)}
+
+    def delete_record(self, factory_name):
+        try:
+            conn = self.get_conn()
+            cursor = conn.cursor()
+            
+            cursor.execute("DELETE FROM factories WHERE factory_name = %s", (factory_name,))
+            
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return {'success': True}
+        except Exception as e:
+            print(f"Error deleting factory: {e}")
+            if 'conn' in locals():
+                conn.rollback()
+            return {'success': False, 'error': str(e)}
 
 class RepresentativeManager(BaseTableManager):
     def __init__(self):
@@ -374,3 +513,39 @@ class RepresentativeManager(BaseTableManager):
         except Exception as e:
             print(f"Error fetching representatives: {e}")
             return [], 1
+
+    def update_record(self, original_representative_name, new_data):
+        try:
+            conn = self.get_conn()
+            cursor = conn.cursor()
+            new_representative_name = new_data.get('new_representative_name')
+            new_phone = new_data.get('new_phone')
+            cursor.execute("""
+                UPDATE representatives 
+                SET representative_name = %s, phone = %s 
+                WHERE representative_name = %s
+            """, (new_representative_name, new_phone, original_representative_name))
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return {'success': True}
+        except Exception as e:
+            print(f"Error updating representative: {e}")
+            if 'conn' in locals():
+                conn.rollback()
+            return {'success': False, 'error': str(e)}
+
+    def delete_record(self, representative_name):
+        try:
+            conn = self.get_conn()
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM representatives WHERE representative_name = %s", (representative_name,))
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return {'success': True}
+        except Exception as e:
+            print(f"Error deleting representative: {e}")
+            if 'conn' in locals():
+                conn.rollback()
+            return {'success': False, 'error': str(e)}
