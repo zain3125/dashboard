@@ -27,7 +27,7 @@ def register_auth_routes(app):
             password = request.form["password"].strip()
             user = get_user_by_username(username)
             if user and check_password_hash(user["password_hash"], password):
-                session["user_id"] = user["id"]
+                session["user_id"] = user["user_id"]
                 session["username"] = user["username"]
                 session["role"] = user["role"]
                 flash("✅ تم تسجيل الدخول بنجاح", "success")
@@ -56,7 +56,7 @@ def register_auth_routes(app):
                 flash("❌ كلمة المرور الجديدة غير متطابقة", "danger")
                 return redirect(url_for("change_password"))
             new_password_hash = generate_password_hash(new_password)
-            update_user_password(user["id"], new_password_hash)
+            update_user_password(user["user_id"], new_password_hash)
             flash("✅ تم تغيير كلمة المرور بنجاح", "success")
             return redirect(url_for("dashboard"))
         return render_template("change_password.html")

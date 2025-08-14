@@ -10,7 +10,7 @@ def get_user_by_username(username):
     conn.close()
     if row:
         return {
-            "id": row[0],
+            "user_id": row[0],
             "username": row[1],
             "password_hash": row[2],
             "role": row[3]
@@ -21,7 +21,7 @@ def update_user_password(user_id, new_password_hash):
     conn = psycopg2.connect(**PG_PARAMS)
     cur = conn.cursor()
     cur.execute(
-        "UPDATE users SET password_hash = %s WHERE id = %s",
+        "UPDATE users SET password_hash = %s WHERE user_id = %s",
         (new_password_hash, user_id)
     )
     conn.commit()
@@ -34,10 +34,10 @@ def get_all_users(exclude_roles=None):
 
     if exclude_roles:
         placeholders = ",".join(["%s"] * len(exclude_roles))
-        query = f"SELECT id, username, role FROM users WHERE role NOT IN ({placeholders}) ORDER BY username"
+        query = f"SELECT user_id, username, role FROM users WHERE role NOT IN ({placeholders}) ORDER BY username"
         cur.execute(query, exclude_roles)
     else:
-        cur.execute("SELECT id, username, role FROM users ORDER BY username")
+        cur.execute("SELECT user_id, username, role FROM users ORDER BY username")
 
     users = cur.fetchall()
     cur.close()

@@ -18,7 +18,7 @@
         <ul class="list">
             {% for user in users %}
                 <li>
-                    <a href="{{ url_for('custody_detail', user_id=user.id) }}">
+                    <a href="{{ url_for('custody_detail', user_id=user.user_id) }}">
                         {{ user.username }} ({{ user.role }})
                     </a>
                 </li>
