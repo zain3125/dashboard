@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Truck Owner Payments</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="header">
+    <h1>Truck Owner Payments</h1>
+  </div>
+  <div class="page-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% endwith %}
+
+    <a class="back-link" href="{{ url_for('payment') }}">← Back to Payments</a>
+
+    <div class="form-card">
+      <h3>Add New Truck Owner Payment</h3>
+        <form method="POST">
+          <div class="form-row">
+            <div>
+              <label for="date_id">Date</label>
+              <input type="date" name="date_id" id="date_id" required>
+            </div>
+            <div>
+                <label for="owner_id">Truck Owner</label>
+                <select name="owner_id" id="owner_id" required>
+                    <option value="" disabled selected>Select a truck owner</option>
+                    {% for o in owners %}
+                      <option value="{{ o.id }}">{{ o.truck_owner }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            </div>
+            <div>
+              <label for="amount">Amount</label>
+              <input type="number" name="amount" id="amount" required>
+            </div>
+            <div>
+              <label for="transfer_fees">Transfer Fees</label>
+              <input type="number" name="transfer_fees" id="transfer_fees">
+            </div>
+            <div>
+              <label for="payment_method">Payment Method</label>
+              <input type="text" name="payment_method" id="payment_method">
+            </div>
+            <div>
+              <label for="notes">Notes</label>
+              <input type="text" name="notes" id="notes">
+            </div>
+            <div>
+              <button type="submit">➕ Add</button>
+            </div>
+          </div>
+        </form>
+    </div>
+
+    <div class="table-card">
+        <h3>All Truck Owner Payments</h3>
+        <form method="GET" action="{{ url_for('truck_owner_payment') }}" class="search-form">
+            <input type="text" name="query" class="search-input" placeholder="🔍 Search..." value="{{ request.args.get('query', '') }}">
+            <button type="submit">Search</button>
+        </form>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Truck Owner</th>
+              <th>Amount</th>
+              <th>Transfer Fees</th>
+              <th>Payment Method</th>
+              <th>Notes</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="truckOwnerTable">
+            {% for row in payments %}
+            <tr data-payment-id="{{ row.truck_owner_transaction_id }}">
+              <td data-field="date_id">{{ row.date_id }}</td>
+              <td data-field="owner_name">{{ row.owner_name }}</td>
+               <td data-field="amount">{{ row.amount }}</td>
+              <td data-field="transfer_fees">{{ row.transfer_fees }}</td>
+              <td data-field="payment_method">{{ row.payment_method }}</td>
+              <td data-field="notes">{{ row.notes }}</td>
+              <td class="actions-cell">
+                <button type="button" class="edit-btn">Edit</button>
+                <button type="button" class="delete-btn">Delete</button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+    </div>
+  </div>
+  <script src="{{ url_for('static', filename='scripts/truck_owner_payment.js') }}"></script>
+</body>
+</html>

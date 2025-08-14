@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Payments</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="header">
+        <h1>Al Bayan Co.</h1>
+        <img src="{{ url_for('static', filename='al-bayan-logo.png') }}" alt="Al Bayan Logo" />
+    </header>
+
+    <main class="container">
+        <a href="/dashboard" class="text-blue-600 hover:underline">&larr; Back to Dashboard</a>
+        <h2 class="title">Payments</h2>
+        <p class="subtitle">Manage your payments</p>
+
+        <div class="grid">
+            <a href="{{ url_for('supplier_payment') }}" class="card pay">
+                <h3>Supplier Payment</h3>
+                <p>Manage supplier payments</p>
+            </a>
+            <a href="{{ url_for('truck_owner_payment') }}" class="card pay">
+                <h3>Truck Owner Payment</h3>
+                <p>Manage truck owner payments</p>
+            </a>
+        </div>
+    </main>
+</body>
+</html>

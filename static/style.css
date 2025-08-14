@@ -65,6 +65,7 @@ body {
 .calendar { border-left: 6px solid #3b82f6; }
 .add { border-left: 6px solid #10b981; }
 .db { border-left: 6px solid #a855f7; }
+.pay { border-left: 6px solid #ec3131; }
 .chart { border-left: 6px solid #f59e0b; }
 .gear { border-left: 6px solid #6b7280; }
 .wallet { border-left: 6px solid #ec4899; }
@@ -254,4 +255,11 @@ table th {
 .alert-danger {
     background-color: #f8d7da;
     color: #721c24;
+}
+
+table td input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 4px;
+    font-size: 14px;
 }

@@ -4,6 +4,7 @@ from .main_routes import register_main_routes
 from .dimension_routes import register_dimension_routes
 from .transaction_routes import register_transaction_routes
 from .custody_routes import register_custody_routes
+from .payment_routes import register_payment_routes
 
 
 def register_routes(app):
@@ -12,3 +13,4 @@ def register_routes(app):
     register_dimension_routes(app)
     register_transaction_routes(app)
     register_custody_routes(app)
+    register_payment_routes(app)
