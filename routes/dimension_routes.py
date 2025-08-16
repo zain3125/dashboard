@@ -194,27 +194,32 @@ def register_dimension_routes(app):
             limit = 10
             offset = (page - 1) * limit
             query = request.args.get("query", "").strip()
+            
             if request.method == 'POST':
                 zone_name = request.form.get('zone_name')
                 if zone_name:
-                    result = zone_manager.insert_record(zone_name)
-                    if result is True:
+                    # تم نقل insert_record هنا بدلاً من الكلاس
+                    result = super(ZoneManager, zone_manager).insert_record(zone_name)
+                    if result == "inserted":
                         flash("✅ تم إضافة المنطقة بنجاح", "success")
-                    elif result is False:
+                    elif result == "exists":
                         flash("⚠️ اسم المنطقة موجود بالفعل", "warning")
                     else:
                         flash("❌ حدث خطأ أثناء الإضافة", "error")
-                    return redirect(url_for("add_zone", page=page))
+                return redirect(url_for("add_zone", page=page))
+
             if query:
-                zones = zone_manager.search_records(query)
+                zones = zone_manager.search(query)
                 total_pages = 1
             else:
                 zones, total_count = zone_manager.fetch_all(limit=limit, offset=offset)
                 total_pages = (total_count + limit - 1) // limit
+
             return render_template("add_zone.html", zones=zones, page=page, total_pages=total_pages)
         except Exception as e:
             flash("❌ حدث خطأ أثناء معالجة الطلب", "error")
             return redirect(url_for("add_zone"))
+
 
     @app.route('/update_zone', methods=['POST'])
     @login_required
@@ -222,12 +227,13 @@ def register_dimension_routes(app):
         data = request.json
         original_zone_name = data.get('id')
         new_zone_name = data.get('zone_name')
-        if not original_zone_name:
-            return jsonify({'success': False, 'error': 'No original zone name provided'})
+        if not original_zone_name or not new_zone_name:
+            return jsonify({'success': False, 'error': 'No original or new zone name provided'})
         
         response = zone_manager.update_record(original_zone_name, {'new_zone_name': new_zone_name})
         return jsonify(response)
-    
+        
+
     @app.route('/delete_zone', methods=['POST'])
     @login_required
     def delete_zone_route():
@@ -238,7 +244,6 @@ def register_dimension_routes(app):
         
         response = zone_manager.delete_record(zone_name)
         return jsonify(response)
-
 
     @app.route("/dashboard/dimension-tables/add-representative", methods=['GET', 'POST'])
     @login_required

@@ -1,5 +1,4 @@
 import psycopg2
-import math
 from db import PG_PARAMS
 
 class BaseTableManager:
@@ -330,26 +329,8 @@ class TruckOwnerManager(BaseTableManager):
 
 class ZoneManager(Member):
     def __init__(self):
-        # تمرير اسم الجدول، عمود الـ ID، وعمود الاسم
         super().__init__("zones", "zone_id", "zone_name")
-
-    def insert_record(self, zone_name):
-        result = super().insert_record(zone_name)
-        if result == "inserted":
-            return True
-        elif result == "exists":
-            return False
-        else:
-            return None
-    
-    def update_record(self, original_zone_name, new_data):
-        response = super().update_record(original_zone_name, {'new_zone_name': new_data.get('zone_name')})
-        return response
-
-    def delete_record(self, zone_name):
-        response = super().delete_record(zone_name)
-        return response
-         
+      
 
 class FactoryManager(Member):
     def __init__(self):

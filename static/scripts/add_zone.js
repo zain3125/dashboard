@@ -4,6 +4,8 @@ document.addEventListener("DOMContentLoaded", function() {
   table.addEventListener("click", function(event) {
     const target = event.target;
     const row = target.closest("tr");
+    if (!row) return; // Make sure the click was inside a row
+
     const originalZoneName = row.dataset.zoneName;
 
     if (target.classList.contains("edit-btn")) {
@@ -13,19 +15,23 @@ document.addEventListener("DOMContentLoaded", function() {
         deleteRecord(originalZoneName, '/delete_zone');
       }
     } else if (target.classList.contains("save-btn")) {
-      const newZoneName = row.querySelector('td[data-field="zone_name"] input').value;
-      updateRecord({
-        id: originalZoneName,
-        zone_name: newZoneName,
-      }, '/update_zone');
+      const inputElement = row.querySelector('input[name="zone_name"]');
+      const newZoneName = inputElement ? inputElement.value : '';
+      if (newZoneName) {
+        updateRecord({
+          id: originalZoneName,
+          zone_name: newZoneName,
+        }, '/update_zone');
+      } else {
+        alert("لا يمكن أن يكون اسم المنطقة فارغًا.");
+      }
     } else if (target.classList.contains("cancel-btn")) {
       toggleEditMode(row);
     }
   });
 
   function toggleEditMode(row) {
-    row.classList.toggle("edit-mode");
-    const isEditMode = row.classList.contains("edit-mode");
+    const isEditMode = row.classList.toggle("edit-mode");
     
     row.querySelectorAll("td[data-field]").forEach(cell => {
       const fieldName = cell.dataset.field;
@@ -58,15 +64,23 @@ document.addEventListener("DOMContentLoaded", function() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
     .then(result => {
       if (result.success) {
         window.location.reload();
       } else {
-        alert('حدث خطأ في التحديث: ' + result.error);
+        alert('حدث خطأ في التحديث: ' + (result.error || 'خطأ غير معروف'));
       }
     })
-    .catch(error => console.error('Error:', error));
+    .catch(error => {
+      console.error('Error:', error);
+      alert('حدث خطأ أثناء الاتصال بالخادم.');
+    });
   }
 
   function deleteRecord(name, url) {
@@ -75,14 +89,22 @@ document.addEventListener("DOMContentLoaded", function() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ zone_name: name }),
     })
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
     .then(result => {
       if (result.success) {
         window.location.reload();
       } else {
-        alert('حدث خطأ في الحذف: ' + result.error);
+        alert('حدث خطأ في الحذف: ' + (result.error || 'خطأ غير معروف'));
       }
     })
-    .catch(error => console.error('Error:', error));
+    .catch(error => {
+      console.error('Error:', error);
+      alert('حدث خطأ أثناء الاتصال بالخادم.');
+    });
   }
 });

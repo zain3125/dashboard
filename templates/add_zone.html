@@ -39,7 +39,8 @@
     <div class="table-card">
       <h3>All Zones</h3>
       <form method="GET" action="{{ url_for('add_zone') }}" class="search-form">
-        <input type="text" name="query" id="searchInput" class="search-input" placeholder="🔍 Search by name..." value="{{ request.args.get('query', '') }}">
+        <input type="text" name="query" id="searchInput" class="search-input" 
+               placeholder="🔍 Search by name..." value="{{ request.args.get('query', '') }}">
         <button type="submit">Search</button>
       </form>
       <table>
@@ -49,24 +50,25 @@
             <th>Actions</th>
           </tr>
         </thead>
-        <tbody>
-            {% for zone in zones %}
-            <tr data-zone-name="{{ zone.zone_name }}">
-                <td>{{ zone.zone_name }}</td> <td class="actions-cell">
-                    <button type="button" class="edit-btn">Edit</button>
-                    <button type="button" class="delete-btn">Delete</button>
-                </td>
-            </tr>
-            {% endfor %}
+        <tbody id="zoneTable">
+          {% for zone in zones %}
+          <tr data-zone-name="{{ zone.zone_name }}">
+            <td data-field="zone_name">{{ zone.zone_name }}</td>
+            <td class="actions-cell">
+              <button type="button" class="edit-btn">Edit</button>
+              <button type="button" class="delete-btn">Delete</button>
+            </td>
+          </tr>
+          {% endfor %}
         </tbody>
       </table>
       <div class="pagination">
         {% if page > 1 %}
-          <a href="{{ url_for('add_zone', page=page-1) }}">⬅ Previous</a>
+          <a href="{{ url_for('add_zone', page=page-1, query=request.args.get('query','')) }}">⬅ Previous</a>
         {% endif %}
         <span>Page {{ page }} of {{ total_pages }}</span>
         {% if page < total_pages %}
-          <a href="{{ url_for('add_zone', page=page+1) }}">Next ➡</a>
+          <a href="{{ url_for('add_zone', page=page+1, query=request.args.get('query','')) }}">Next ➡</a>
         {% endif %}
       </div>
     </div>
