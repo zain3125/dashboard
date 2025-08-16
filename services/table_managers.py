@@ -93,7 +93,6 @@ class Member:
         self.phone_column = phone_column
 
     def get_conn(self):
-        # هنا يمكن استخدام Connection Pool لتحسين الأداء
         return psycopg2.connect(**PG_PARAMS)
 
     def fetch_all(self, limit=10, offset=0):
@@ -134,6 +133,10 @@ class Member:
             conn = self.get_conn()
             cur = conn.cursor()
             
+            select_columns = [self.name_column]
+            if self.phone_column:
+                select_columns.append(self.phone_column)
+            
             conditions = [f"{self.name_column} ILIKE %s"]
             params = [f"%{query}%"]
             
@@ -142,19 +145,22 @@ class Member:
                 params.append(f"%{query}%")
                 
             cur.execute(f"""
-                SELECT {self.name_column}, {self.phone_column}
+                SELECT {', '.join(select_columns)}
                 FROM {self.table_name}
                 WHERE {' OR '.join(conditions)}
                 ORDER BY {self.name_column}
             """, tuple(params))
+            
             rows = cur.fetchall()
             cur.close()
             conn.close()
 
+            # Format the results based on available columns
             if self.phone_column:
                 return [{self.name_column: r[0], self.phone_column: r[1]} for r in rows]
             else:
                 return [{self.name_column: r[0]} for r in rows]
+        
         except Exception as e:
             print(f"Error searching records: {e}")
             return []
@@ -382,52 +388,45 @@ class TruckOwnerManager(BaseTableManager):
 
 class ZoneManager(Member):
     def __init__(self):
+        # تمرير اسم الجدول، عمود الـ ID، وعمود الاسم
         super().__init__("zones", "zone_id", "zone_name")
 
     def insert_record(self, zone_name):
-        # هنا نمرر None كوسيط لعمود 'phone'
-        result = super().insert_record(zone_name, None)
+        result = super().insert_record(zone_name)
         if result == "inserted":
             return True
         elif result == "exists":
             return False
         else:
             return None
-        
+    
     def update_record(self, original_zone_name, new_data):
-        return super().update_record(original_zone_name, new_data)
-        
+        response = super().update_record(original_zone_name, {'new_zone_name': new_data.get('zone_name')})
+        return response
+
     def delete_record(self, zone_name):
-        return super().delete_record(zone_name)    
+        response = super().delete_record(zone_name)
+        return response
+         
 
 class FactoryManager(Member):
     def __init__(self):
         super().__init__("factories", "factory_id", "factory_name")
 
-    def fetch_all(self, page, per_page, query=""):
+    def fetch_all(self, page, per_page):
         conn = self.get_conn()
         cursor = conn.cursor()
         offset = (page - 1) * per_page
-        if query:
-            cursor.execute("""
-                SELECT factory_name
-                FROM factories
-                WHERE factory_name ILIKE %s
-                ORDER BY factory_name ASC
-            """, (f"%{query}%",))
-            rows = cursor.fetchall()
-            total_pages = 1
-        else:
-            cursor.execute("SELECT COUNT(*) FROM factories")
-            total_rows = cursor.fetchone()[0]
-            total_pages = math.ceil(total_rows / per_page) if total_rows else 1
-            cursor.execute("""
-                SELECT factory_name
-                FROM factories
-                ORDER BY factory_name ASC
-                LIMIT %s OFFSET %s
-            """, (per_page, offset))
-            rows = cursor.fetchall()
+        cursor.execute("SELECT COUNT(*) FROM factories")
+        total_rows = cursor.fetchone()[0]
+        total_pages = math.ceil(total_rows / per_page) if total_rows else 1
+        cursor.execute("""
+            SELECT factory_name
+            FROM factories
+            ORDER BY factory_name ASC
+            LIMIT %s OFFSET %s
+        """, (per_page, offset))
+        rows = cursor.fetchall()
         factories = [row[0] for row in rows]
         cursor.close()
         conn.close()

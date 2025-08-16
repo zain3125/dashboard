@@ -158,7 +158,7 @@ def register_dimension_routes(app):
             else:
                 flash("❌ حدث خطأ أثناء إضافة المصنع", "error")
             return redirect(url_for('add_factory', page=page))
-        factories, total_pages = factory_manager.fetch_all(page, PER_PAGE, query)
+        factories, total_pages = factory_manager.fetch_all(page, PER_PAGE)
         return render_template("add_factory.html", factories=factories, page=page, total_pages=total_pages)
 
     @app.route('/update_factory', methods=['POST'])
@@ -208,7 +208,7 @@ def register_dimension_routes(app):
                 zones = zone_manager.search_records(query)
                 total_pages = 1
             else:
-                zones, total_count = zone_manager.fetch_all_records(limit=limit, offset=offset)
+                zones, total_count = zone_manager.fetch_all(limit=limit, offset=offset)
                 total_pages = (total_count + limit - 1) // limit
             return render_template("add_zone.html", zones=zones, page=page, total_pages=total_pages)
         except Exception as e:
