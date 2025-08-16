@@ -1,7 +1,7 @@
 import psycopg2
 from db import PG_PARAMS
 
-class Member:
+class BaseTable:
     def __init__(self, table_name, id_column, name_column, phone_column=None):
         self.table_name = table_name
         self.id_column = id_column
@@ -164,24 +164,24 @@ class Member:
                 conn.rollback()
             return {'success': False, 'error': str(e)}
 
-class SupplierManager(Member):
+class SupplierManager(BaseTable):
     def __init__(self):
         super().__init__("suppliers", "supplier_id", "supplier_name", "phone")
 
-class RepresentativeManager(Member):
+class RepresentativeManager(BaseTable):
     def __init__(self):
         super().__init__("representatives", "representative_id", "representative_name", "phone")
 
-class ZoneManager(Member):
+class ZoneManager(BaseTable):
     def __init__(self):
         super().__init__("zones", "zone_id", "zone_name")
 
-class FactoryManager(Member):
+class FactoryManager(BaseTable):
     def __init__(self):
         super().__init__("factories", "factory_id", "factory_name")
 
 # TruckOwnerManager handles truck owners and their associated trucks
-class TruckOwnerManager(Member):
+class TruckOwnerManager(BaseTable):
     def __init__(self):
         super().__init__("trucks", "truck_num", "truck_num")
 
