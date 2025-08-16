@@ -89,7 +89,6 @@ def register_dimension_routes(app):
             limit = 10
             offset = (page - 1) * limit
             query = request.args.get("query", "").strip()
-
             if request.method == 'POST':
                 supplier_name = request.form.get('supplier_name')
                 phone_number = request.form.get('phone_number')
@@ -112,7 +111,6 @@ def register_dimension_routes(app):
         except Exception as e:
             flash("❌ حدث خطأ أثناء معالجة الطلب", "error")
             return redirect(url_for("add_supplier"))
-
     @app.route('/update_supplier', methods=['POST'])
     @login_required
     def update_supplier_route():
@@ -126,7 +124,6 @@ def register_dimension_routes(app):
             return jsonify({'success': False, 'error': 'No original supplier name provided'})
         response = supplier_manager.update_record(original_supplier_name, new_data)
         return jsonify(response)
-    
     @app.route('/delete_supplier', methods=['POST'])
     @login_required
     def delete_supplier_route():
@@ -161,7 +158,6 @@ def register_dimension_routes(app):
             return redirect(url_for('add_factory', page=page))
         factories, total_pages = factory_manager.fetch_all(limit=limit, offset=offset)
         return render_template("add_factory.html", factories=factories, page=page, total_pages=total_pages)
-
     @app.route('/update_factory', methods=['POST'])
     @login_required
     def update_factory_route():
@@ -170,10 +166,8 @@ def register_dimension_routes(app):
         new_factory_name = data.get('factory_name')
         if not original_factory_name:
             return jsonify({'success': False, 'error': 'No original factory name provided'})
-        
         response = factory_manager.update_record(original_factory_name, {'new_factory_name': new_factory_name})
         return jsonify(response)
-    
     @app.route('/delete_factory', methods=['POST'])
     @login_required
     def delete_factory_route():
@@ -181,7 +175,6 @@ def register_dimension_routes(app):
         factory_name = data.get('factory_name')
         if not factory_name:
             return jsonify({'success': False, 'error': 'No factory name provided'})
-        
         response = factory_manager.delete_record(factory_name)
         return jsonify(response)
 
@@ -194,11 +187,9 @@ def register_dimension_routes(app):
             limit = 10
             offset = (page - 1) * limit
             query = request.args.get("query", "").strip()
-            
             if request.method == 'POST':
                 zone_name = request.form.get('zone_name')
                 if zone_name:
-                    # تم نقل insert_record هنا بدلاً من الكلاس
                     result = super(ZoneManager, zone_manager).insert_record(zone_name)
                     if result == "inserted":
                         flash("✅ تم إضافة المنطقة بنجاح", "success")
@@ -207,7 +198,6 @@ def register_dimension_routes(app):
                     else:
                         flash("❌ حدث خطأ أثناء الإضافة", "error")
                 return redirect(url_for("add_zone", page=page))
-
             if query:
                 zones = zone_manager.search(query)
                 total_pages = 1
@@ -219,8 +209,6 @@ def register_dimension_routes(app):
         except Exception as e:
             flash("❌ حدث خطأ أثناء معالجة الطلب", "error")
             return redirect(url_for("add_zone"))
-
-
     @app.route('/update_zone', methods=['POST'])
     @login_required
     def update_zone_route():
@@ -232,8 +220,6 @@ def register_dimension_routes(app):
         
         response = zone_manager.update_record(original_zone_name, {'new_zone_name': new_zone_name})
         return jsonify(response)
-        
-
     @app.route('/delete_zone', methods=['POST'])
     @login_required
     def delete_zone_route():
@@ -241,10 +227,10 @@ def register_dimension_routes(app):
         zone_name = data.get('zone_name')
         if not zone_name:
             return jsonify({'success': False, 'error': 'No zone name provided'})
-        
         response = zone_manager.delete_record(zone_name)
         return jsonify(response)
 
+    # 🧑‍💼 Representative Routes
     @app.route("/dashboard/dimension-tables/add-representative", methods=['GET', 'POST'])
     @login_required
     def add_representative():
@@ -253,7 +239,6 @@ def register_dimension_routes(app):
             limit = 10
             offset = (page - 1) * limit
             query = request.args.get("query", "").strip()
-
             if request.method == 'POST':
                 representative_name = request.form.get('representative_name', '').strip()
                 phone = request.form.get('phone', '').strip()
@@ -268,22 +253,14 @@ def register_dimension_routes(app):
                         flash("⚠️ المندوب موجود بالفعل", "warning")
                     else:
                         flash("❌ حدث خطأ أثناء إضافة المندوب", "error")
-                
                 return redirect(url_for('add_representative', page=page))
-
-            # -------------------
-            # منطق جلب البيانات والبحث
             if query:
-                # عند البحث، لا تحتاج إلى تقسيم النتائج إلى صفحات
-                # دالة search تعيد قائمة واحدة فقط
                 representatives = representative_manager.search(query)
-                total_count = len(representatives) # احسب العدد الإجمالي من القائمة
+                total_count = len(representatives)
                 total_pages = 1
             else:
                 representatives, total_count = representative_manager.fetch_all(limit=limit, offset=offset)
                 total_pages = (total_count + limit - 1) // limit
-            # -------------------
-
             return render_template("add_representative.html",
                                 representatives=representatives,
                                 page=page,
@@ -293,31 +270,22 @@ def register_dimension_routes(app):
             print(f"Error in add_representative route: {e}")
             flash("❌ حدث خطأ أثناء معالجة الطلب", "error")
             return redirect(url_for("add_representative"))
-
-    # في مسار update_representative_route()
     @app.route('/update_representative', methods=['POST'])
     @login_required
     def update_representative_route():
         try:
             data = request.json
             original_representative_name = data.get('original_representative_name')
-            
             new_data = {
                 'new_representative_name': data.get('new_representative_name'),
                 'new_phone': data.get('phone')
             }
-
             if not original_representative_name:
                 return jsonify({'success': False, 'error': 'No original representative name provided'})
-
-
             response = representative_manager.update_record(original_representative_name, new_data)
-            
             return jsonify(response)
-
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)})
-    
     @app.route('/delete_representative', methods=['POST'])
     @login_required
     def delete_representative_route():
@@ -326,11 +294,8 @@ def register_dimension_routes(app):
             representative_name = data.get('representative_name')
             if not representative_name:
                 return jsonify({'success': False, 'error': 'No representative name provided'})
-
-            # الآن يمكنك تمرير الاسم مباشرةً إلى دالة الحذف
             response = representative_manager.delete_record(representative_name)
             return jsonify(response)
-
         except Exception as e:
             print(f"Error in delete_representative route: {e}")
             return jsonify({'success': False, 'error': str(e)})

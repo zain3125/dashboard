@@ -71,7 +71,6 @@ class Member:
             cur.close()
             conn.close()
 
-            # Format the results based on available columns
             if self.phone_column:
                 return [{self.name_column: r[0], self.phone_column: r[1]} for r in rows]
             else:
@@ -279,21 +278,15 @@ class TruckOwnerManager(Member):
             new_truck_num = new_data.get('new_truck_num')
             new_owner_name = new_data.get('new_owner_name')
             new_phone = new_data.get('new_phone')
-            
             cur.execute("SELECT owner_id FROM trucks WHERE truck_num = %s", (original_truck_num,))
             truck_row = cur.fetchone()
-            
             if not truck_row:
                 conn.rollback()
                 return {'success': False, 'error': 'Truck not found.'}
-            
             owner_id = truck_row[0]
-            
             cur.execute("UPDATE truck_owners SET owner_name = %s, phone = %s WHERE owner_id = %s", (new_owner_name, new_phone, owner_id))
-            
             if original_truck_num != new_truck_num:
                 cur.execute("UPDATE trucks SET truck_num = %s WHERE truck_num = %s", (new_truck_num, original_truck_num))
-            
             conn.commit()
             cur.close()
             conn.close()
