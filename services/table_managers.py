@@ -1,31 +1,6 @@
 import psycopg2
 from db import PG_PARAMS
 
-class BaseTableManager:
-    def __init__(self, table_name, id_column, name_column):
-        self.table_name = table_name
-        self.id_column = id_column
-        self.name_column = name_column
-
-    def get_conn(self):
-        return psycopg2.connect(**PG_PARAMS)
-
-    def delete_record(self, record_id):
-        try:
-            conn = self.get_conn()
-            cur = conn.cursor()
-            sql_query = f"DELETE FROM {self.table_name} WHERE {self.id_column} = %s"
-            cur.execute(sql_query, (record_id,))
-            conn.commit()
-            cur.close()
-            conn.close()
-            return {'success': True}
-        except Exception as e:
-            print(f"Error deleting record from {self.table_name}: {e}")
-            if conn:
-                conn.rollback()
-            return {'success': False, 'error': str(e)}
-
 class Member:
     def __init__(self, table_name, id_column, name_column, phone_column=None):
         self.table_name = table_name
@@ -198,7 +173,16 @@ class RepresentativeManager(Member):
     def __init__(self):
         super().__init__("representatives", "representative_id", "representative_name", "phone")
 
-class TruckOwnerManager(BaseTableManager):
+class ZoneManager(Member):
+    def __init__(self):
+        super().__init__("zones", "zone_id", "zone_name")
+
+class FactoryManager(Member):
+    def __init__(self):
+        super().__init__("factories", "factory_id", "factory_name")
+
+# TruckOwnerManager handles truck owners and their associated trucks
+class TruckOwnerManager(Member):
     def __init__(self):
         super().__init__("trucks", "truck_num", "truck_num")
 
@@ -296,7 +280,6 @@ class TruckOwnerManager(BaseTableManager):
             new_owner_name = new_data.get('new_owner_name')
             new_phone = new_data.get('new_phone')
             
-            # Find the owner_id associated with the truck
             cur.execute("SELECT owner_id FROM trucks WHERE truck_num = %s", (original_truck_num,))
             truck_row = cur.fetchone()
             
@@ -306,10 +289,8 @@ class TruckOwnerManager(BaseTableManager):
             
             owner_id = truck_row[0]
             
-            # Update the owner's details
             cur.execute("UPDATE truck_owners SET owner_name = %s, phone = %s WHERE owner_id = %s", (new_owner_name, new_phone, owner_id))
             
-            # If the truck number itself has changed, update it as well
             if original_truck_num != new_truck_num:
                 cur.execute("UPDATE trucks SET truck_num = %s WHERE truck_num = %s", (new_truck_num, original_truck_num))
             
@@ -321,17 +302,4 @@ class TruckOwnerManager(BaseTableManager):
             print(f"Error updating truck owner: {e}")
             if 'conn' in locals() and conn:
                 conn.rollback()
-            return {'success': False, 'error': str(e)}    
-
-    def delete_record(self, truck_num):
-        return super().delete_record(truck_num)
-
-
-class ZoneManager(Member):
-    def __init__(self):
-        super().__init__("zones", "zone_id", "zone_name")
-      
-
-class FactoryManager(Member):
-    def __init__(self):
-        super().__init__("factories", "factory_id", "factory_name")
+            return {'success': False, 'error': str(e)}
