@@ -16,7 +16,12 @@ class BaseTableManager:
             conn = self.get_conn()
             cur = conn.cursor()
             if query:
-                cur.execute(f"SELECT {self.name_column} FROM {self.table_name} WHERE {self.name_column} ILIKE %s ORDER BY {self.name_column}", (f"%{query}%",))
+                cur.execute(f"""SELECT {self.name_column}
+                            FROM {self.table_name}
+                            WHERE {self.name_column}
+                            ILIKE %s
+                            ORDER BY {self.name_column}
+                        """, (f"%{query}%",))
                 rows = cur.fetchall()
                 total_count = len(rows)
             else:
@@ -77,6 +82,123 @@ class BaseTableManager:
         except Exception as e:
             print(f"Error deleting record from {self.table_name}: {e}")
             if conn:
+                conn.rollback()
+            return {'success': False, 'error': str(e)}
+
+class Member:
+    def __init__(self, table_name, id_column, name_column, Phone_column):
+        self.table_name = table_name
+        self.id_column = id_column
+        self.name_column = name_column
+        self.phone_column = Phone_column
+
+    def get_conn(self):
+        return psycopg2.connect(**PG_PARAMS)
+    
+    def fetch_all(self, limit=10, offset=0):
+        try:
+            conn = self.get_conn()
+            cur = conn.cursor()
+            cur.execute(f"""
+                        SELECT {self.name_column}, {self.phone_column}
+                        FROM {self.table_name}
+                        ORDER BY {self.name_column}
+                        LIMIT %s OFFSET %s
+                    """, (limit, offset))
+            rows = cur.fetchall()
+            
+            cur.execute(f"SELECT COUNT(*) FROM {self.table_name}")
+            
+            total_count = cur.fetchone()[0]
+            cur.close()
+            conn.close()
+            
+            return [{self.name_column: r[0], self.phone_column: r[1]} for r in rows], total_count
+        except Exception as e:
+            print(f"Error fetching members: {e}")
+            return [], 0
+        
+    def search(self, query):
+        try:
+            conn = self.get_conn()
+            cur = conn.cursor()
+            cur.execute(f"""SELECT {self.name_column}, {self.phone_column}
+                        FROM {self.table_name}
+                        WHERE {self.name_column}
+                        ILIKE %s OR phone ILIKE %s
+                        ORDER BY {self.name_column}
+                    """, (f"%{query}%", f"%{query}%"))
+            rows = cur.fetchall()
+            cur.close()
+            conn.close()
+            return [{self.name_column: r[0], self.phone_column: r[1]} for r in rows]
+        except Exception as e:
+            print(f"Error searching suppliers: {e}")
+            return []
+    
+    def delete_record(self, member_name):
+        try:
+            conn = self.get_conn()
+            cur = conn.cursor()
+            cur.execute(f"DELETE FROM {self.table_name} WHERE {self.name_column} = %s", (member_name,))
+            conn.commit()
+            cur.close()
+            conn.close()
+            return {'success': True}
+        except Exception as e:
+            print(f"Error deleting {self.name_column}: {e}")
+            if 'conn' in locals():
+                conn.rollback()
+            return {'success': False, 'error': str(e)}
+
+    def insert_record(self, member_name, phone_number):
+        try:
+            conn = self.get_conn()
+            cur = conn.cursor()
+            
+            cur.execute(f"""
+                INSERT INTO {self.table_name} ({self.name_column}, {self.phone_column})
+                VALUES (%s, %s)
+                ON CONFLICT ({self.name_column}) DO NOTHING
+                RETURNING {self.name_column}
+            """, (member_name, phone_number))
+            
+            result = cur.fetchone()
+            conn.commit()
+            cur.close()
+            conn.close()
+            
+            if result:
+                return "inserted"
+            else:
+                return "exists"
+                
+        except Exception as e:
+            print(f"Error inserting {self.name_column}: {e}")
+            if 'conn' in locals() and conn:
+                conn.rollback()
+            return "error"
+
+    def update_record(self, original_member_name, new_data):
+        try:
+            conn = self.get_conn()
+            cur = conn.cursor()
+            
+            new_member_name = new_data.get(f'new_{self.name_column}')
+            new_phone = new_data.get('new_phone')
+
+            cur.execute(f"""
+                UPDATE {self.table_name} 
+                SET {self.name_column} = %s, {self.phone_column} = %s 
+                WHERE {self.name_column} = %s
+            """, (new_member_name, new_phone, original_member_name))
+            conn.commit()
+            cur.close()
+            conn.close()
+            return {'success': True}
+        except Exception as e:
+            print(f"Error updating {self.name_column}: {e}")
+            if 'conn' in locals():
                 conn.rollback()
             return {'success': False, 'error': str(e)}
 
@@ -174,31 +296,6 @@ class TruckOwnerManager(BaseTableManager):
         try:
             conn = self.get_conn()
             cur = conn.cursor()
-            new_truck_num = new_data['new_truck_num']
-            new_owner_name = new_data['new_owner_name']
-            new_phone = new_data['new_phone']
-            cur.execute("SELECT owner_id FROM trucks WHERE truck_num = %s", (original_truck_num,))
-            truck_row = cur.fetchone()
-            if not truck_row:
-                conn.rollback()
-                return {'success': False, 'error': 'Truck not found.'}
-            owner_id = truck_row[0]
-            cur.execute("UPDATE truck_owners SET owner_name = %s, phone = %s WHERE owner_id = %s", (new_owner_name, new_phone, owner_id))
-            if original_truck_num != new_truck_num:
-                cur.execute("UPDATE trucks SET truck_num = %s WHERE truck_num = %s", (new_truck_num, original_truck_num))
-            conn.commit()
-            cur.close()
-            conn.close()
-            return {'success': True}
-        except Exception as e:
-            print(f"Error updating truck owner: {e}")
-            conn.rollback()
-            return {'success': False, 'error': str(e)}
-
-    def update_record(self, original_truck_num, new_data):
-        try:
-            conn = self.get_conn()
-            cur = conn.cursor()
             new_truck_num = new_data.get('new_truck_num')
             new_owner_name = new_data.get('new_owner_name')
             new_phone = new_data.get('new_phone')
@@ -233,94 +330,10 @@ class TruckOwnerManager(BaseTableManager):
     def delete_record(self, truck_num):
         return super().delete_record(truck_num)
 
-class SupplierManager(BaseTableManager):
+class SupplierManager(Member):
     def __init__(self):
-        super().__init__("suppliers", "supplier_id", "supplier_name")
+        super().__init__("suppliers", "supplier_id", "supplier_name", "phone")
 
-    def insert_record(self, supplier_name, phone_number):
-        try:
-            conn = self.get_conn()
-            cur = conn.cursor()
-            cur.execute("""
-                INSERT INTO suppliers (supplier_name, phone)
-                VALUES (%s, %s)
-                ON CONFLICT (supplier_name) DO NOTHING
-            """, (supplier_name, phone_number))
-            conn.commit()
-            cur.close()
-            conn.close()
-            return True
-        except Exception as e:
-            print(f"Error inserting supplier: {e}")
-            return False
-
-    def fetch_all(self, limit=10, offset=0):
-        try:
-            conn = self.get_conn()
-            cur = conn.cursor()
-            cur.execute("SELECT supplier_name, phone FROM suppliers ORDER BY supplier_name LIMIT %s OFFSET %s", (limit, offset))
-            rows = cur.fetchall()
-            cur.execute("SELECT COUNT(*) FROM suppliers")
-            total_count = cur.fetchone()[0]
-            cur.close()
-            conn.close()
-            return [{'supplier_name': r[0], 'phone_number': r[1]} for r in rows], total_count
-        except Exception as e:
-            print(f"Error fetching suppliers: {e}")
-            return [], 0
-
-    def search(self, query):
-        try:
-            conn = self.get_conn()
-            cur = conn.cursor()
-            cur.execute("SELECT supplier_name, phone FROM suppliers WHERE supplier_name ILIKE %s OR phone ILIKE %s ORDER BY supplier_name", (f"%{query}%", f"%{query}%"))
-            rows = cur.fetchall()
-            cur.close()
-            conn.close()
-            return [{'supplier_name': r[0], 'phone_number': r[1]} for r in rows]
-        except Exception as e:
-            print(f"Error searching suppliers: {e}")
-            return []
-
-    def update_record(self, original_supplier_name, new_data):
-        try:
-            conn = self.get_conn()
-            cur = conn.cursor()
-            
-            new_supplier_name = new_data.get('new_supplier_name')
-            new_phone = new_data.get('new_phone')
-
-            # Update the supplier_name and phone where supplier_name matches the original name
-            cur.execute("""
-                UPDATE suppliers 
-                SET supplier_name = %s, phone = %s 
-                WHERE supplier_name = %s
-            """, (new_supplier_name, new_phone, original_supplier_name))
-            
-            conn.commit()
-            cur.close()
-            conn.close()
-            return {'success': True}
-        except Exception as e:
-            print(f"Error updating supplier: {e}")
-            if 'conn' in locals():
-                conn.rollback()
-            return {'success': False, 'error': str(e)}
-
-    def delete_record(self, supplier_name):
-        try:
-            conn = self.get_conn()
-            cur = conn.cursor()
-            cur.execute("DELETE FROM suppliers WHERE supplier_name = %s", (supplier_name,))
-            conn.commit()
-            cur.close()
-            conn.close()
-            return {'success': True}
-        except Exception as e:
-            print(f"Error deleting supplier: {e}")
-            if 'conn' in locals():
-                conn.rollback()
-            return {'success': False, 'error': str(e)}
 
 class ZoneManager(BaseTableManager):
     def __init__(self):
@@ -458,94 +471,6 @@ class FactoryManager(BaseTableManager):
                 conn.rollback()
             return {'success': False, 'error': str(e)}
 
-class RepresentativeManager(BaseTableManager):
+class RepresentativeManager(Member):
     def __init__(self):
-        super().__init__("representatives", "representative_id", "representative_name")
-
-    def insert_record(self, representative_name, phone):
-        try:
-            conn = self.get_conn()
-            cursor = conn.cursor()
-            cursor.execute("""
-                INSERT INTO representatives (representative_name, phone)
-                VALUES (%s, %s)
-                ON CONFLICT (representative_name, phone) DO NOTHING
-            """, (representative_name, phone))
-            conn.commit()
-            rows_inserted = cursor.rowcount
-            cursor.close()
-            conn.close()
-            return "inserted" if rows_inserted > 0 else "exists"
-        except Exception as e:
-            print("Error inserting representative:", e)
-            return "error"
-
-    def fetch_all(self, page, per_page, query=""):
-        try:
-            conn = self.get_conn()
-            cursor = conn.cursor()
-            offset = (page - 1) * per_page
-            if query:
-                cursor.execute("""
-                    SELECT representative_name, phone FROM representatives
-                    WHERE representative_name ILIKE %s OR phone ILIKE %s
-                    ORDER BY representative_id DESC
-                    LIMIT %s OFFSET %s
-                """, (f"%{query}%", f"%{query}%", per_page, offset))
-                rows = cursor.fetchall()
-                cursor.execute("""
-                    SELECT COUNT(*) FROM representatives
-                    WHERE representative_name ILIKE %s OR phone ILIKE %s
-                """, (f"%{query}%", f"%{query}%"))
-            else:
-                cursor.execute("""
-                    SELECT representative_name, phone FROM representatives
-                    ORDER BY representative_id DESC
-                    LIMIT %s OFFSET %s
-                """, (per_page, offset))
-                rows = cursor.fetchall()
-                cursor.execute("SELECT COUNT(*) FROM representatives")
-            total_count = cursor.fetchone()[0]
-            total_pages = (total_count + per_page - 1) // per_page
-            cursor.close()
-            conn.close()
-            return rows, total_pages
-        except Exception as e:
-            print(f"Error fetching representatives: {e}")
-            return [], 1
-
-    def update_record(self, original_representative_name, new_data):
-        try:
-            conn = self.get_conn()
-            cursor = conn.cursor()
-            new_representative_name = new_data.get('new_representative_name')
-            new_phone = new_data.get('new_phone')
-            cursor.execute("""
-                UPDATE representatives 
-                SET representative_name = %s, phone = %s 
-                WHERE representative_name = %s
-            """, (new_representative_name, new_phone, original_representative_name))
-            conn.commit()
-            cursor.close()
-            conn.close()
-            return {'success': True}
-        except Exception as e:
-            print(f"Error updating representative: {e}")
-            if 'conn' in locals():
-                conn.rollback()
-            return {'success': False, 'error': str(e)}
-
-    def delete_record(self, representative_name):
-        try:
-            conn = self.get_conn()
-            cursor = conn.cursor()
-            cursor.execute("DELETE FROM representatives WHERE representative_name = %s", (representative_name,))
-            conn.commit()
-            cursor.close()
-            conn.close()
-            return {'success': True}
-        except Exception as e:
-            print(f"Error deleting representative: {e}")
-            if 'conn' in locals():
-                conn.rollback()
-            return {'success': False, 'error': str(e)}
+        super().__init__("representatives", "representative_id", "representative_name", "phone")

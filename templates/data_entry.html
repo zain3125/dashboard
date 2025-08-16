@@ -11,7 +11,15 @@
         <a href="/dashboard" class="text-blue-600 hover:underline">&larr; Back to Dashboard</a>
         <h1 class="text-3xl font-bold mt-4">Data Entry</h1>
         <p class="text-gray-600">Add new records to the database</p>
-
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% endwith %}
         <div class="bg-white p-6 mt-6 rounded shadow">
             <form method="POST" id="data-form">
                 <table class="min-w-full text-sm text-left" id="data-table">
@@ -81,10 +89,12 @@
                             <td class="p-2"><input type="number" name="sell_price[]" step="any" class="border rounded px-2 py-1 w-full"></td>
 
                             <td class="p-2">
-                                <select name="representative[]" class="border rounded px-2 py-1 w-full">
-                                    <option value="">Select Representative</option>
-                                    {% for rep, phone in representatives %}
-                                        <option value="{{ rep }}">{{ rep }}</option>
+                                <select name="representative" class="form-control representative-select">
+                                    <option value="">Representative</option>
+                                    {% for representative in representatives %}
+                                        <option value="{{ representative.representative_name }}">
+                                            {{ representative.representative_name }}
+                                        </option>
                                     {% endfor %}
                                 </select>
                             </td>

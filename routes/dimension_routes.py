@@ -89,6 +89,7 @@ def register_dimension_routes(app):
             limit = 10
             offset = (page - 1) * limit
             query = request.args.get("query", "").strip()
+
             if request.method == 'POST':
                 supplier_name = request.form.get('supplier_name')
                 phone_number = request.form.get('phone_number')
@@ -238,49 +239,92 @@ def register_dimension_routes(app):
         return jsonify(response)
 
 
-    # 👨‍💼 Representative Routes
     @app.route("/dashboard/dimension-tables/add-representative", methods=['GET', 'POST'])
     @login_required
     def add_representative():
-        PER_PAGE = 10
-        query = request.args.get("query", "").strip()
-        page = int(request.args.get("page", 1))
-        if request.method == 'POST':
-            representative_name = request.form.get('representative_name', '').strip()
-            phone = request.form.get('phone', '').strip()
-            if not representative_name or not phone:
-                flash("❌ أدخل اسم ورقم المندوب", "error")
-                return redirect(url_for('add_representative', page=page))
-            result = representative_manager.insert_record(representative_name, phone)
-            if result == "inserted":
-                flash("✅ تم إضافة المندوب بنجاح", "success")
-            elif result == "exists":
-                flash("⚠️ المندوب موجود بالفعل", "warning")
-            else:
-                flash("❌ حدث خطأ أثناء إضافة المندوب", "error")
-            return redirect(url_for('add_representative', page=page))
-        representatives, total_pages = representative_manager.fetch_all(page, PER_PAGE, query)
-        return render_template("add_representative.html", representatives=representatives, page=page, total_pages=total_pages)
+        try:
+            page = int(request.args.get("page", 1))
+            limit = 10
+            offset = (page - 1) * limit
+            query = request.args.get("query", "").strip()
 
+            if request.method == 'POST':
+                representative_name = request.form.get('representative_name', '').strip()
+                phone = request.form.get('phone', '').strip()
+
+                if not representative_name or not phone:
+                    flash("❌ أدخل اسم ورقم المندوب", "error")
+                else:
+                    result = representative_manager.insert_record(representative_name, phone)
+                    if result == "inserted":
+                        flash("✅ تم إضافة المندوب بنجاح", "success")
+                    elif result == "exists":
+                        flash("⚠️ المندوب موجود بالفعل", "warning")
+                    else:
+                        flash("❌ حدث خطأ أثناء إضافة المندوب", "error")
+                
+                return redirect(url_for('add_representative', page=page))
+
+            # -------------------
+            # منطق جلب البيانات والبحث
+            if query:
+                # عند البحث، لا تحتاج إلى تقسيم النتائج إلى صفحات
+                # دالة search تعيد قائمة واحدة فقط
+                representatives = representative_manager.search(query)
+                total_count = len(representatives) # احسب العدد الإجمالي من القائمة
+                total_pages = 1
+            else:
+                representatives, total_count = representative_manager.fetch_all(limit=limit, offset=offset)
+                total_pages = (total_count + limit - 1) // limit
+            # -------------------
+
+            return render_template("add_representative.html",
+                                representatives=representatives,
+                                page=page,
+                                total_pages=total_pages,
+                                )
+        except Exception as e:
+            print(f"Error in add_representative route: {e}")
+            flash("❌ حدث خطأ أثناء معالجة الطلب", "error")
+            return redirect(url_for("add_representative"))
+
+    # في مسار update_representative_route()
     @app.route('/update_representative', methods=['POST'])
     @login_required
     def update_representative_route():
-        data = request.json
-        original_representative_name = data.get('id')
-        new_representative_name = data.get('representative_name')
-        if not original_representative_name:
-            return jsonify({'success': False, 'error': 'No original representative name provided'})
-        
-        response = representative_manager.update_record(original_representative_name, {'new_representative_name': new_representative_name})
-        return jsonify(response)
+        try:
+            data = request.json
+            original_representative_name = data.get('original_representative_name')
+            
+            new_data = {
+                'new_representative_name': data.get('new_representative_name'),
+                'new_phone': data.get('phone')
+            }
+
+            if not original_representative_name:
+                return jsonify({'success': False, 'error': 'No original representative name provided'})
+
+
+            response = representative_manager.update_record(original_representative_name, new_data)
+            
+            return jsonify(response)
+
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)})
     
     @app.route('/delete_representative', methods=['POST'])
     @login_required
     def delete_representative_route():
-        data = request.json
-        representative_id = data.get('representative_id')
-        if not representative_id:
-            return jsonify({'success': False, 'error': 'No representative ID provided'})
-        
-        response = representative_manager.delete_record(representative_id)
-        return jsonify(response)
+        try:
+            data = request.json
+            representative_name = data.get('representative_name')
+            if not representative_name:
+                return jsonify({'success': False, 'error': 'No representative name provided'})
+
+            # الآن يمكنك تمرير الاسم مباشرةً إلى دالة الحذف
+            response = representative_manager.delete_record(representative_name)
+            return jsonify(response)
+
+        except Exception as e:
+            print(f"Error in delete_representative route: {e}")
+            return jsonify({'success': False, 'error': str(e)})

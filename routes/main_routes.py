@@ -100,7 +100,7 @@ def register_main_routes(app):
         suppliers, _ = supplier_manager.fetch_all(limit=100, offset=0)
         factories, _ = factory_manager.fetch_all(page=1, per_page=100, query="")
         zones, _ = zone_manager.fetch_all_records(limit=100, offset=0)
-        representatives, _ = representative_manager.fetch_all(page=1, per_page=100)
+        representatives, _ = representative_manager.fetch_all(limit=10, offset=1)
         month_records = get_current_month_records()
 
         return render_template(

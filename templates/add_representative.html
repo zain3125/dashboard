@@ -40,43 +40,43 @@
       </form>
     </div>
     
-    <div class="table-card">
-      <h3>All Representatives</h3>
-      <form method="GET" action="{{ url_for('add_representative') }}" class="search-form">
-        <input type="text" name="query" id="searchInput" class="search-input" placeholder="🔍 Search by name or phone..." value="{{ request.args.get('query', '') }}">
-        <button type="submit">Search</button>
-      </form>
-      <table>
-        <thead>
-          <tr>
-            <th>Representative Name</th>
-            <th>Phone Number</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="representativeTable">
-          {% for row in representatives %}
-          <tr data-representative-id="{{ row[0] }}">
-            <td data-field="representative_name">{{ row[0] }}</td>
-            <td data-field="phone">{{ row[1] }}</td>
-            <td class="actions-cell">
-              <button type="button" class="edit-btn">Edit</button>
-              <button type="button" class="delete-btn">Delete</button>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      <div class="pagination">
-        {% if page > 1 %}
-          <a href="{{ url_for('add_representative', page=page-1) }}">⬅ Previous</a>
-        {% endif %}
-        <span>Page {{ page }} of {{ total_pages }}</span>
-        {% if page < total_pages %}
-          <a href="{{ url_for('add_representative', page=page+1) }}">Next ➡</a>
-        {% endif %}
-      </div>
-    </div>
+<div class="table-card">
+      <h3>All Representatives</h3>
+      <form method="GET" action="{{ url_for('add_representative') }}" class="search-form">
+        <input type="text" name="query" id="searchInput" class="search-input" placeholder="🔍 Search by name or phone..." value="{{ request.args.get('query', '') }}">
+        <button type="submit">Search</button>
+      </form>
+      <table>
+        <thead>
+          <tr>
+            <th>Representative Name</th>
+            <th>Phone Number</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="representativeTable">
+          {% for row in representatives %}
+          <tr data-representative-id="{{ row.representative_id }}" data-representative-name="{{ row.representative_name }}">
+            <td data-field="representative_name">{{ row.representative_name }}</td>
+            <td data-field="phone">{{ row.phone }}</td>
+            <td class="actions-cell">
+              <button type="button" class="edit-btn">Edit</button>
+              <button type="button" class="delete-btn">Delete</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="pagination">
+        {% if page > 1 %}
+          <a href="{{ url_for('add_representative', page=page-1, query=request.args.get('query', '')) }}">⬅ Previous</a>
+        {% endif %}
+        <span>Page {{ page }} of {{ total_pages }}</span>
+        {% if page < total_pages %}
+          <a href="{{ url_for('add_representative', page=page+1, query=request.args.get('query', '')) }}">Next ➡</a>
+        {% endif %}
+      </div>
+    </div>
   </div>
   <script src="{{ url_for('static', filename='scripts/add_representative.js') }}"></script>
 </body>
