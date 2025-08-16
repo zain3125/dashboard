@@ -86,121 +86,170 @@ class BaseTableManager:
             return {'success': False, 'error': str(e)}
 
 class Member:
-    def __init__(self, table_name, id_column, name_column, Phone_column):
+    def __init__(self, table_name, id_column, name_column, phone_column=None):
         self.table_name = table_name
         self.id_column = id_column
         self.name_column = name_column
-        self.phone_column = Phone_column
+        self.phone_column = phone_column
 
     def get_conn(self):
+        # هنا يمكن استخدام Connection Pool لتحسين الأداء
         return psycopg2.connect(**PG_PARAMS)
-    
+
     def fetch_all(self, limit=10, offset=0):
         try:
             conn = self.get_conn()
             cur = conn.cursor()
+            
+            columns = [self.name_column]
+            if self.phone_column:
+                columns.append(self.phone_column)
+
             cur.execute(f"""
-                        SELECT {self.name_column}, {self.phone_column}
-                        FROM {self.table_name}
-                        ORDER BY {self.name_column}
-                        LIMIT %s OFFSET %s
-                    """, (limit, offset))
+                SELECT {', '.join(columns)}
+                FROM {self.table_name}
+                ORDER BY {self.name_column}
+                LIMIT %s OFFSET %s
+            """, (limit, offset))
             rows = cur.fetchall()
             
             cur.execute(f"SELECT COUNT(*) FROM {self.table_name}")
-            
             total_count = cur.fetchone()[0]
+            
             cur.close()
             conn.close()
             
-            return [{self.name_column: r[0], self.phone_column: r[1]} for r in rows], total_count
+            if self.phone_column:
+                result = [{self.name_column: r[0], self.phone_column: r[1]} for r in rows]
+            else:
+                result = [{self.name_column: r[0]} for r in rows]
+
+            return result, total_count
         except Exception as e:
-            print(f"Error fetching members: {e}")
+            print(f"Error fetching records: {e}")
             return [], 0
-        
+            
     def search(self, query):
         try:
             conn = self.get_conn()
             cur = conn.cursor()
-            cur.execute(f"""SELECT {self.name_column}, {self.phone_column}
-                        FROM {self.table_name}
-                        WHERE {self.name_column}
-                        ILIKE %s OR phone ILIKE %s
-                        ORDER BY {self.name_column}
-                    """, (f"%{query}%", f"%{query}%"))
+            
+            conditions = [f"{self.name_column} ILIKE %s"]
+            params = [f"%{query}%"]
+            
+            if self.phone_column:
+                conditions.append(f"{self.phone_column} ILIKE %s")
+                params.append(f"%{query}%")
+                
+            cur.execute(f"""
+                SELECT {self.name_column}, {self.phone_column}
+                FROM {self.table_name}
+                WHERE {' OR '.join(conditions)}
+                ORDER BY {self.name_column}
+            """, tuple(params))
             rows = cur.fetchall()
             cur.close()
             conn.close()
-            return [{self.name_column: r[0], self.phone_column: r[1]} for r in rows]
+
+            if self.phone_column:
+                return [{self.name_column: r[0], self.phone_column: r[1]} for r in rows]
+            else:
+                return [{self.name_column: r[0]} for r in rows]
         except Exception as e:
-            print(f"Error searching suppliers: {e}")
+            print(f"Error searching records: {e}")
             return []
-    
-    def delete_record(self, member_name):
+            
+    def delete_record(self, name_value):
         try:
             conn = self.get_conn()
             cur = conn.cursor()
-            cur.execute(f"DELETE FROM {self.table_name} WHERE {self.name_column} = %s", (member_name,))
+            cur.execute(f"DELETE FROM {self.table_name} WHERE {self.name_column} = %s", (name_value,))
+            deleted_rows = cur.rowcount
             conn.commit()
             cur.close()
             conn.close()
-            return {'success': True}
+            return {'success': deleted_rows > 0}
         except Exception as e:
-            print(f"Error deleting {self.name_column}: {e}")
+            print(f"Error deleting record: {e}")
             if 'conn' in locals():
                 conn.rollback()
             return {'success': False, 'error': str(e)}
 
-    def insert_record(self, member_name, phone_number):
+    def insert_record(self, name_value, phone_value=None):
         try:
             conn = self.get_conn()
             cur = conn.cursor()
             
-            cur.execute(f"""
-                INSERT INTO {self.table_name} ({self.name_column}, {self.phone_column})
-                VALUES (%s, %s)
-                ON CONFLICT ({self.name_column}) DO NOTHING
-                RETURNING {self.name_column}
-            """, (member_name, phone_number))
-            
+            if self.phone_column and phone_value is not None:
+                cur.execute(f"""
+                    INSERT INTO {self.table_name} ({self.name_column}, {self.phone_column})
+                    VALUES (%s, %s)
+                    ON CONFLICT ({self.name_column}) DO NOTHING
+                    RETURNING {self.name_column};
+                """, (name_value, phone_value))
+            else:
+                cur.execute(f"""
+                    INSERT INTO {self.table_name} ({self.name_column})
+                    VALUES (%s)
+                    ON CONFLICT ({self.name_column}) DO NOTHING
+                    RETURNING {self.name_column};
+                """, (name_value,))
+                
             result = cur.fetchone()
             conn.commit()
             cur.close()
             conn.close()
             
-            if result:
-                return "inserted"
-            else:
-                return "exists"
-                
+            return "inserted" if result else "exists"
+            
         except Exception as e:
-            print(f"Error inserting {self.name_column}: {e}")
+            print(f"Error inserting record: {e}")
             if 'conn' in locals() and conn:
                 conn.rollback()
             return "error"
-
-    def update_record(self, original_member_name, new_data):
+            
+    def update_record(self, original_name, new_data):
         try:
             conn = self.get_conn()
             cur = conn.cursor()
             
-            new_member_name = new_data.get(f'new_{self.name_column}')
-            new_phone = new_data.get('new_phone')
-
-            cur.execute(f"""
-                UPDATE {self.table_name} 
-                SET {self.name_column} = %s, {self.phone_column} = %s 
-                WHERE {self.name_column} = %s
-            """, (new_member_name, new_phone, original_member_name))
+            set_clauses = []
+            params = []
+            
+            if f'new_{self.name_column}' in new_data:
+                set_clauses.append(f"{self.name_column} = %s")
+                params.append(new_data[f'new_{self.name_column}'])
+            
+            if self.phone_column and 'new_phone' in new_data:
+                set_clauses.append(f"{self.phone_column} = %s")
+                params.append(new_data['new_phone'])
+                
+            params.append(original_name)
+            
+            query = f"UPDATE {self.table_name} SET {', '.join(set_clauses)} WHERE {self.name_column} = %s"
+            
+            cur.execute(query, tuple(params))
+            
+            updated_rows = cur.rowcount
             conn.commit()
             cur.close()
             conn.close()
-            return {'success': True}
+            
+            return {'success': updated_rows > 0}
+            
         except Exception as e:
-            print(f"Error updating {self.name_column}: {e}")
-            if 'conn' in locals():
+            print(f"Error updating record: {e}")
+            if 'conn' in locals() and conn:
                 conn.rollback()
             return {'success': False, 'error': str(e)}
+
+class SupplierManager(Member):
+    def __init__(self):
+        super().__init__("suppliers", "supplier_id", "supplier_name", "phone")
+
+class RepresentativeManager(Member):
+    def __init__(self):
+        super().__init__("representatives", "representative_id", "representative_name", "phone")
 
 class TruckOwnerManager(BaseTableManager):
     def __init__(self):
@@ -330,84 +379,30 @@ class TruckOwnerManager(BaseTableManager):
     def delete_record(self, truck_num):
         return super().delete_record(truck_num)
 
-class SupplierManager(Member):
-    def __init__(self):
-        super().__init__("suppliers", "supplier_id", "supplier_name", "phone")
 
-
-class ZoneManager(BaseTableManager):
+class ZoneManager(Member):
     def __init__(self):
         super().__init__("zones", "zone_id", "zone_name")
 
     def insert_record(self, zone_name):
-        try:
-            conn = self.get_conn()
-            cursor = conn.cursor()
-            cursor.execute("""
-                INSERT INTO zones (zone_name)
-                VALUES (%s)
-                ON CONFLICT (zone_name) DO NOTHING
-                RETURNING zone_id;
-            """, (zone_name,))
-            result = cursor.fetchone()
-            conn.commit()
-            cursor.close()
-            conn.close()
-            return result is not None
-        except Exception as e:
-            print(f"Error inserting zone: {e}")
+        # هنا نمرر None كوسيط لعمود 'phone'
+        result = super().insert_record(zone_name, None)
+        if result == "inserted":
+            return True
+        elif result == "exists":
+            return False
+        else:
             return None
-    
-    def update_record(self, record_id, new_data):
-        try:
-            conn = self.get_conn()
-            cursor = conn.cursor()
-            new_zone_name = new_data.get('new_zone_name')
-            cursor.execute("UPDATE zones SET zone_name = %s WHERE zone_name = %s", (new_zone_name, record_id))
-            conn.commit()
-            cursor.close()
-            conn.close()
-            return {'success': True}
-        except Exception as e:
-            print(f"Error updating zone: {e}")
-            if 'conn' in locals():
-                conn.rollback()
-            return {'success': False, 'error': str(e)}
-    
-    def delete_record(self, record_id):
-        try:
-            conn = self.get_conn()
-            cursor = conn.cursor()
-            cursor.execute("DELETE FROM zones WHERE zone_name = %s", (record_id,))
-            conn.commit()
-            cursor.close()
-            conn.close()
-            return {'success': True}
-        except Exception as e:
-            print(f"Error deleting zone: {e}")
-            if 'conn' in locals():
-                conn.rollback()
-            return {'success': False, 'error': str(e)}
+        
+    def update_record(self, original_zone_name, new_data):
+        return super().update_record(original_zone_name, new_data)
+        
+    def delete_record(self, zone_name):
+        return super().delete_record(zone_name)    
 
-class FactoryManager(BaseTableManager):
+class FactoryManager(Member):
     def __init__(self):
         super().__init__("factories", "factory_id", "factory_name")
-
-    def insert_record(self, factory_name):
-        try:
-            conn = self.get_conn()
-            cursor = conn.cursor()
-            cursor.execute("SELECT 1 FROM factories WHERE factory_name = %s", (factory_name,))
-            if cursor.fetchone():
-                return "exists"
-            cursor.execute("INSERT INTO factories (factory_name) VALUES (%s)", (factory_name,))
-            conn.commit()
-            cursor.close()
-            conn.close()
-            return "inserted"
-        except Exception as e:
-            print(f"Error inserting factory: {e}")
-            return "error"
 
     def fetch_all(self, page, per_page, query=""):
         conn = self.get_conn()
@@ -437,40 +432,3 @@ class FactoryManager(BaseTableManager):
         cursor.close()
         conn.close()
         return factories, total_pages
-
-    def update_record(self, original_factory_name, new_data):
-        try:
-            conn = self.get_conn()
-            cursor = conn.cursor()
-            new_factory_name = new_data.get('new_factory_name')
-            cursor.execute("UPDATE factories SET factory_name = %s WHERE factory_name = %s", (new_factory_name, original_factory_name))
-            conn.commit()
-            cursor.close()
-            conn.close()
-            return {'success': True}
-        except Exception as e:
-            print(f"Error updating factory: {e}")
-            if 'conn' in locals():
-                conn.rollback()
-            return {'success': False, 'error': str(e)}
-
-    def delete_record(self, factory_name):
-        try:
-            conn = self.get_conn()
-            cursor = conn.cursor()
-            
-            cursor.execute("DELETE FROM factories WHERE factory_name = %s", (factory_name,))
-            
-            conn.commit()
-            cursor.close()
-            conn.close()
-            return {'success': True}
-        except Exception as e:
-            print(f"Error deleting factory: {e}")
-            if 'conn' in locals():
-                conn.rollback()
-            return {'success': False, 'error': str(e)}
-
-class RepresentativeManager(Member):
-    def __init__(self):
-        super().__init__("representatives", "representative_id", "representative_name", "phone")
