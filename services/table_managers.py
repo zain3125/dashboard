@@ -11,64 +11,6 @@ class BaseTableManager:
     def get_conn(self):
         return psycopg2.connect(**PG_PARAMS)
 
-    def fetch_all_records(self, limit=10, offset=0, query=""):
-        try:
-            conn = self.get_conn()
-            cur = conn.cursor()
-            if query:
-                cur.execute(f"""SELECT {self.name_column}
-                            FROM {self.table_name}
-                            WHERE {self.name_column}
-                            ILIKE %s
-                            ORDER BY {self.name_column}
-                        """, (f"%{query}%",))
-                rows = cur.fetchall()
-                total_count = len(rows)
-            else:
-                cur.execute(f"SELECT COUNT(*) FROM {self.table_name}")
-                total_count = cur.fetchone()[0]
-                cur.execute(f"SELECT {self.name_column} FROM {self.table_name} ORDER BY {self.name_column} LIMIT %s OFFSET %s", (limit, offset))
-                rows = cur.fetchall()
-            cur.close()
-            conn.close()
-            records = [row[0] for row in rows]
-            return records, total_count
-        except Exception as e:
-            print(f"Error fetching records from {self.table_name}: {e}")
-            return [], 0
-
-    def search_records(self, query):
-        try:
-            conn = self.get_conn()
-            cur = conn.cursor()
-            cur.execute(f"SELECT {self.name_column} FROM {self.table_name} WHERE {self.name_column} ILIKE %s ORDER BY {self.name_column}", (f"%{query}%",))
-            rows = cur.fetchall()
-            cur.close()
-            conn.close()
-            return [row[0] for row in rows]
-        except Exception as e:
-            print(f"Error searching {self.table_name}: {e}")
-            return []
-
-    def update_record(self, record_id, new_data):
-        try:
-            conn = self.get_conn()
-            cur = conn.cursor()
-            set_clause = ', '.join([f"{key} = %s" for key in new_data.keys()])
-            values = list(new_data.values())
-            values.append(record_id)
-            sql_query = f"UPDATE {self.table_name} SET {set_clause} WHERE {self.id_column} = %s"
-            cur.execute(sql_query, tuple(values))
-            conn.commit()
-            cur.close()
-            conn.close()
-            return {'success': True}
-        except Exception as e:
-            print(f"Error updating record in {self.table_name}: {e}")
-            if conn:
-                conn.rollback()
-            return {'success': False, 'error': str(e)}
-
     def delete_record(self, record_id):
         try:
             conn = self.get_conn()
@@ -412,22 +354,3 @@ class ZoneManager(Member):
 class FactoryManager(Member):
     def __init__(self):
         super().__init__("factories", "factory_id", "factory_name")
-
-    def fetch_all(self, page, per_page):
-        conn = self.get_conn()
-        cursor = conn.cursor()
-        offset = (page - 1) * per_page
-        cursor.execute("SELECT COUNT(*) FROM factories")
-        total_rows = cursor.fetchone()[0]
-        total_pages = math.ceil(total_rows / per_page) if total_rows else 1
-        cursor.execute("""
-            SELECT factory_name
-            FROM factories
-            ORDER BY factory_name ASC
-            LIMIT %s OFFSET %s
-        """, (per_page, offset))
-        rows = cursor.fetchall()
-        factories = [row[0] for row in rows]
-        cursor.close()
-        conn.close()
-        return factories, total_pages

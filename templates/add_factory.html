@@ -51,8 +51,8 @@
         </thead>
         <tbody id="factoryTable">
           {% for row in factories %}
-          <tr data-factory-name="{{ row }}">
-            <td data-field="factory_name">{{ row }}</td>
+          <tr data-factory-name="{{ row.factory_name }}">
+            <td data-field="factory_name">{{ row.factory_name }}</td>
             <td class="actions-cell">
               <button type="button" class="edit-btn">Edit</button>
               <button type="button" class="delete-btn">Delete</button>

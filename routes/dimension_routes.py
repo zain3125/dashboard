@@ -142,8 +142,9 @@ def register_dimension_routes(app):
     @app.route("/dashboard/dimension-tables/add-factory", methods=['GET', 'POST'])
     @login_required
     def add_factory():
-        PER_PAGE = 10
-        query = request.args.get("query", "").strip()
+        page = int(request.args.get("page", 1))
+        limit = 10
+        offset = (page - 1) * limit
         page = int(request.args.get("page", 1))
         if request.method == 'POST':
             factory_name = request.form.get('factory_name', '').strip()
@@ -158,7 +159,7 @@ def register_dimension_routes(app):
             else:
                 flash("❌ حدث خطأ أثناء إضافة المصنع", "error")
             return redirect(url_for('add_factory', page=page))
-        factories, total_pages = factory_manager.fetch_all(page, PER_PAGE)
+        factories, total_pages = factory_manager.fetch_all(limit=limit, offset=offset)
         return render_template("add_factory.html", factories=factories, page=page, total_pages=total_pages)
 
     @app.route('/update_factory', methods=['POST'])
