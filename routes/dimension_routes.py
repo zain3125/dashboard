@@ -142,7 +142,6 @@ def register_dimension_routes(app):
         page = int(request.args.get("page", 1))
         limit = 10
         offset = (page - 1) * limit
-        page = int(request.args.get("page", 1))
         if request.method == 'POST':
             factory_name = request.form.get('factory_name', '').strip()
             if not factory_name:

@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const tbody = document.querySelector("#data-table tbody");
     
     // Check if the variables from Jinja are available
-    if (typeof truckArr === 'undefined' || typeof suppliers === 'undefined') {
+    if (typeof truckArr === 'undefined' || typeof suppliers === 'undefined' || typeof factories === 'undefined' || typeof zones === 'undefined' || typeof representatives === 'undefined') {
         console.error("Jinja variables are not defined. Make sure the script is loaded after the variables in the HTML file.");
         return;
     }
@@ -39,10 +39,19 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addRow = function() {
         const firstRow = tbody.rows[0];
         const newRow = firstRow.cloneNode(true);
+
+        // clear the values in the new row
         newRow.querySelectorAll('input, select').forEach(el => {
             if (el.tagName === 'SELECT') el.selectedIndex = 0;
             else el.value = '';
         });
+
+        // The representative select field in the cloned row should have an array name
+        const repSelect = newRow.querySelector('select[name="representative[]"]');
+        if (repSelect) {
+            repSelect.name = 'representative[]';
+        }
+
         tbody.appendChild(newRow);
     }
 
@@ -77,21 +86,25 @@ document.addEventListener('DOMContentLoaded', function() {
                             </select>`;
                             break;
                         case "factory":
+                            // Corrected mapping for factories
                             newContent = `<select name="factory[]" class="border rounded px-1 w-full">
                                 <option value="">Select Factory</option>
-                                ${factories.map(fac => `<option value="${fac}" ${fac === value ? 'selected' : ''}>${fac}</option>`).join('')}
+                                ${factories.map(fac => `<option value="${fac.factory_name}" ${fac.factory_name === value ? 'selected' : ''}>${fac.factory_name}</option>`).join('')}
                             </select>`;
                             break;
                         case "zone":
+                            // Corrected mapping for zones
                             newContent = `<select name="zone[]" class="border rounded px-1 w-full">
                                 <option value="">Select Zone</option>
-                                ${zones.map(z => `<option value="${z}" ${z === value ? 'selected' : ''}>${z}</option>`).join('')}
+                                ${zones.map(z => `<option value="${z.zone_name}" ${z.zone_name === value ? 'selected' : ''}>${z.zone_name}</option>`).join('')}
                             </select>`;
                             break;
                         case "representative":
                             newContent = `<select name="representative[]" class="border rounded px-1 w-full">
                                 <option value="">Select Representative</option>
-                                ${representatives.map(pair => `<option value="${pair[0]}" ${pair[0] === value ? 'selected' : ''}>${pair[0]}</option>`).join('')}
+                                ${representatives.map(rep => 
+                                    `<option value="${rep.representative_name}" ${rep.representative_name === value ? 'selected' : ''}>${rep.representative_name}</option>`
+                                ).join('')}
                             </select>`;
                             break;
                         case "truck_owner":
@@ -136,7 +149,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
-            }).then(res => res.json())
+            })
+            .then(res => res.json())
             .then(res => {
                 if (res.success) {
                     e.target.classList.add('hidden');

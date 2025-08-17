@@ -28,34 +28,34 @@ def get_id_by_name(cur, table, id_col, name_col, name):
     cur.execute(f"INSERT INTO {table} ({name_col}) VALUES (%s) RETURNING {id_col}", (name,))
     return cur.fetchone()[0]
 
-def save_data_entry(data):
+def save_data_entry(records):
     try:
         conn = psycopg2.connect(**PG_PARAMS)
         cur = conn.cursor()
 
-        for i in range(len(data["dates"])):
-            if not data["dates"][i] or not data["truck_nums"][i] or not data["suppliers"][i] \
-               or not data["factories_list"][i] or not data["zones_list"][i] or not data["representatives_list"][i]:
+        for record in records:
+            # Check for required fields for each record
+            if not record["date"] or not record["truck_num"]:
                 continue
 
-            date_id = get_or_create_date_id(cur, data["dates"][i])
-            supplier_id = get_id_by_name(cur, "suppliers", "supplier_id", "supplier_name", data["suppliers"][i])
-            factory_id = get_id_by_name(cur, "factories", "factory_id", "factory_name", data["factories_list"][i])
-            zone_id = get_id_by_name(cur, "zones", "zone_id", "zone_name", data["zones_list"][i])
-            representative_id = get_id_by_name(cur, "representatives", "representative_id", "representative_name", data["representatives_list"][i])
-            owner_id = get_id_by_name(cur, "truck_owners", "owner_id", "owner_name", data["truck_owners"][i]) if data["truck_owners"][i] else None
+            date_id = get_or_create_date_id(cur, record["date"])
+            supplier_id = get_id_by_name(cur, "suppliers", "supplier_id", "supplier_name", record["supplier"])
+            factory_id = get_id_by_name(cur, "factories", "factory_id", "factory_name", record["factory"])
+            zone_id = get_id_by_name(cur, "zones", "zone_id", "zone_name", record["zone"])
+            representative_id = get_id_by_name(cur, "representatives", "representative_id", "representative_name", record["representative"])
+            owner_id = get_id_by_name(cur, "truck_owners", "owner_id", "owner_name", record["truck_owner"]) if record["truck_owner"] else None
 
-            cur.execute("SELECT truck_num FROM trucks WHERE truck_num = %s", (data["truck_nums"][i],))
+            cur.execute("SELECT truck_num FROM trucks WHERE truck_num = %s", (record["truck_num"],))
             if not cur.fetchone():
-                cur.execute("INSERT INTO trucks (truck_num, owner_id) VALUES (%s, %s)", (data["truck_nums"][i], owner_id))
-
+                cur.execute("INSERT INTO trucks (truck_num, owner_id) VALUES (%s, %s)", (record["truck_num"], owner_id))
+            print("Record to insert:", record)
             cur.execute("""
                 INSERT INTO main (date_id, truck_num, supplier_id, factory_id, zone_id, weight, ohda, factory_price, sell_price, representative_id)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
-                date_id, data["truck_nums"][i], supplier_id, factory_id, zone_id,
-                data["weights"][i] or None, data["ohdas"][i] or None,
-                data["factory_prices"][i] or None, data["sell_prices"][i] or None,
+                date_id, record["truck_num"], supplier_id, factory_id, zone_id,
+                record["weight"] or None, record["ohda"] or None,
+                record["factory_price"] or None, record["sell_price"] or None,
                 representative_id
             ))
 
@@ -66,6 +66,8 @@ def save_data_entry(data):
 
     except Exception as e:
         print(f"Error saving data: {e}")
+        if conn:
+            conn.rollback()
         return False
 
 def get_current_month_records():
@@ -152,10 +154,8 @@ def delete_naqla_record(naqla_id):
     try:
         conn = psycopg2.connect(**PG_PARAMS)
         cur = conn.cursor()
-
         cur.execute("DELETE FROM main WHERE naqla_id = %s", (naqla_id,))
         conn.commit()
-
         cur.close()
         conn.close()
         return {'success': True}

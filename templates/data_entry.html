@@ -69,7 +69,7 @@
                                 <select name="factory[]" class="border rounded px-2 py-1 w-full">
                                     <option value="">Select Factory</option>
                                     {% for fac in factories %}
-                                        <option value="{{ fac }}">{{ fac }}</option>
+                                         <option value="{{ fac.factory_name }}">{{ fac.factory_name }}</option>
                                     {% endfor %}
                                 </select>
                             </td>
@@ -78,7 +78,7 @@
                                 <select name="zone[]" class="border rounded px-2 py-1 w-full">
                                     <option value="">Select Zone</option>
                                     {% for z in zones %}
-                                        <option value="{{ z }}">{{ z }}</option>
+                                        <option value="{{ z.zone_name }}">{{ z.zone_name }}</option>
                                     {% endfor %}
                                 </select>
                             </td>
@@ -87,15 +87,12 @@
                             <td class="p-2"><input type="number" name="ohda[]" step="any" class="border rounded px-2 py-1 w-full"></td>
                             <td class="p-2"><input type="number" name="factory_price[]" step="any" class="border rounded px-2 py-1 w-full"></td>
                             <td class="p-2"><input type="number" name="sell_price[]" step="any" class="border rounded px-2 py-1 w-full"></td>
-
                             <td class="p-2">
-                                <select name="representative" class="form-control representative-select">
-                                    <option value="">Representative</option>
-                                    {% for representative in representatives %}
-                                        <option value="{{ representative.representative_name }}">
-                                            {{ representative.representative_name }}
-                                        </option>
-                                    {% endfor %}
+                                <select name="representative[]" class="border rounded px-2 py-1 w-full">
+                                     <option value="">Select Representative</option>
+                                     {% for rep in representatives %}
+                                         <option value="{{ rep.representative_name }}">{{ rep.representative_name }}</option>
+                                     {% endfor %}
                                 </select>
                             </td>
                             <td class="p-2 text-center">

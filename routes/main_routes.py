@@ -7,9 +7,6 @@ from .auth_routes import login_required
 from services.main_data_manager import save_data_entry, update_naqla_record, get_current_month_records, delete_naqla_record
 from services.table_managers import TruckOwnerManager, SupplierManager, ZoneManager, FactoryManager, RepresentativeManager
 
-# ========================
-# Class Instances
-# ========================
 truck_owner_manager = TruckOwnerManager()
 supplier_manager = SupplierManager()
 zone_manager = ZoneManager()
@@ -42,55 +39,44 @@ def register_main_routes(app):
                 else:
                     flash(f"❌ فشل الحذف: {result['error']}", "error")
                 return redirect(url_for("data_entry"))
+            
             naqla_ids = request.form.getlist("naqla_id[]")
-            if any(naqla_ids):
-                for i, naqla_id in enumerate(naqla_ids):
-                    if naqla_id:
-                        data = {
-                            "date": request.form.getlist("date[]")[i],
-                            "truck_num": request.form.getlist("truck_num[]")[i],
-                            "truck_owner": request.form.getlist("truck_owner[]")[i],
-                            "supplier": request.form.getlist("supplier[]")[i],
-                            "factory": request.form.getlist("factory[]")[i],
-                            "zone": request.form.getlist("zone[]")[i],
-                            "weight": request.form.getlist("weight[]")[i],
-                            "ohda": request.form.getlist("ohda[]")[i],
-                            "factory_price": request.form.getlist("factory_price[]")[i],
-                            "sell_price": request.form.getlist("sell_price[]")[i],
-                            "representative": request.form.getlist("representative[]")[i]
-                        }
-                        update_naqla_record(naqla_id, data)
-                    else:
-                        data = {
-                            "dates": [request.form.getlist("date[]")[i]],
-                            "truck_nums": [request.form.getlist("truck_num[]")[i]],
-                            "truck_owners": [request.form.getlist("truck_owner[]")[i]],
-                            "suppliers": [request.form.getlist("supplier[]")[i]],
-                            "factories_list": [request.form.getlist("factory[]")[i]],
-                            "zones_list": [request.form.getlist("zone[]")[i]],
-                            "weights": [request.form.getlist("weight[]")[i]],
-                            "ohdas": [request.form.getlist("ohda[]")[i]],
-                            "factory_prices": [request.form.getlist("factory_price[]")[i]],
-                            "sell_prices": [request.form.getlist("sell_price[]")[i]],
-                            "representatives_list": [request.form.getlist("representative[]")[i]]
-                        }
-                        save_data_entry(data)
-                flash("✅ تم حفظ/تعديل البيانات بنجاح!", "success")
-            else:
-                data = {
-                    "dates": request.form.getlist("date[]"),
-                    "truck_nums": request.form.getlist("truck_num[]"),
-                    "truck_owners": request.form.getlist("truck_owner[]"),
-                    "suppliers": request.form.getlist("supplier[]"),
-                    "factories_list": request.form.getlist("factory[]"),
-                    "zones_list": request.form.getlist("zone[]"),
-                    "weights": request.form.getlist("weight[]"),
-                    "ohdas": request.form.getlist("ohda[]"),
-                    "factory_prices": request.form.getlist("factory_price[]"),
-                    "sell_prices": request.form.getlist("sell_price[]"),
-                    "representatives_list": request.form.getlist("representative[]")
+            all_dates = request.form.getlist("date[]")
+            all_truck_nums = request.form.getlist("truck_num[]")
+            all_truck_owners = request.form.getlist("truck_owner[]")
+            all_suppliers = request.form.getlist("supplier[]")
+            all_factories = request.form.getlist("factory[]")
+            all_zones = request.form.getlist("zone[]")
+            all_weights = request.form.getlist("weight[]")
+            all_ohdas = request.form.getlist("ohda[]")
+            all_factory_prices = request.form.getlist("factory_price[]")
+            all_sell_prices = request.form.getlist("sell_price[]")
+            all_representatives = request.form.getlist("representative[]")
+            new_records_to_save = []
+
+            for i in range(len(all_dates)):
+                record_data = {
+                    "date": all_dates[i] if i < len(all_dates) else None,
+                    "truck_num": all_truck_nums[i] if i < len(all_truck_nums) else None,
+                    "truck_owner": all_truck_owners[i] if i < len(all_truck_owners) else None,
+                    "supplier": all_suppliers[i] if i < len(all_suppliers) else None,
+                    "factory": all_factories[i] if i < len(all_factories) else None,
+                    "zone": all_zones[i] if i < len(all_zones) else None,
+                    "weight": all_weights[i] if i < len(all_weights) else None,
+                    "ohda": all_ohdas[i] if i < len(all_ohdas) else None,
+                    "factory_price": all_factory_prices[i] if i < len(all_factory_prices) else None,
+                    "sell_price": all_sell_prices[i] if i < len(all_sell_prices) else None,
+                    "representative": all_representatives[i] if i < len(all_representatives) else None,
                 }
-                if save_data_entry(data):
+                
+                naqla_id = naqla_ids[i] if i < len(naqla_ids) else None
+                if naqla_id:
+                    update_naqla_record(naqla_id, record_data)
+                elif record_data["date"] and record_data["truck_num"]:
+                    new_records_to_save.append(record_data)
+
+            if new_records_to_save:
+                if save_data_entry(new_records_to_save):
                     flash("✅ تم حفظ البيانات بنجاح!", "success")
                 else:
                     flash("❌ حدث خطأ أثناء حفظ البيانات", "error")
@@ -98,9 +84,9 @@ def register_main_routes(app):
 
         trucks = truck_owner_manager.fetch_trucks_with_owners()
         suppliers, _ = supplier_manager.fetch_all(limit=100, offset=0)
-        factories, _ = factory_manager.fetch_all(page=1, per_page=100, query="")
-        zones, _ = zone_manager.fetch_all_records(limit=100, offset=0)
-        representatives, _ = representative_manager.fetch_all(limit=10, offset=1)
+        factories, _ = factory_manager.fetch_all(limit=10, offset=1)
+        zones, _ = zone_manager.fetch_all(limit=100, offset=0)
+        representatives, _ = representative_manager.fetch_all(limit=100, offset=0)
         month_records = get_current_month_records()
 
         return render_template(
