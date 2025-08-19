@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Bank</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="header">
+    <h1>Add Bank</h1>
+  </div>
+  <div class="page-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% endwith %}
+    <a class="back-link" href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
+
+    <div class="form-card">
+      <h3>Add New Bank</h3>
+      <form method="POST">
+        <div class="form-row">
+          <div>
+            <label for="bank_name">Bank Name</label>
+            <input type="text" name="bank_name" id="bank_name" required>
+          </div>
+          <div>
+            <button type="submit">➕ Add</button>
+          </div>
+        </div>
+      </form>
+    </div>
+    
+    <div class="table-card">
+      <h3>All Banks</h3>
+      <form method="GET" action="{{ url_for('add_bank') }}" class="search-form">
+        <input type="text" name="query" id="searchInput" class="search-input" placeholder="🔍 Search by name..." value="{{ request.args.get('query', '') }}">
+        <button type="submit">Search</button>
+      </form>
+      <table>
+        <thead>
+          <tr>
+            <th>Bank Name</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="bankTable">
+          {% for row in banks %}
+          <tr data-bank-name="{{ row.bank_name }}">
+            <td data-field="bank_name">{{ row.bank_name }}</td>
+            <td class="actions-cell">
+              <button type="button" class="edit-btn">Edit</button>
+              <button type="button" class="delete-btn">Delete</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="pagination">
+        {% if page > 1 %}
+          <a href="{{ url_for('add_bank', page=page-1) }}">⬅ Previous</a>
+        {% endif %}
+        <span>Page {{ page }} of {{ total_pages }}</span>
+        {% if page < total_pages %}
+          <a href="{{ url_for('add_bank', page=page+1) }}">Next ➡</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <script src="{{ url_for('static', filename='scripts/add_bank.js') }}"></script>
+</body>
+</html>

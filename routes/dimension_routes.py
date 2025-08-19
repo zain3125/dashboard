@@ -4,7 +4,10 @@ from flask import (
     flash, jsonify
 )
 from .auth_routes import login_required
-from services.table_managers import TruckOwnerManager, SupplierManager, ZoneManager, FactoryManager, RepresentativeManager
+from services.table_managers import (
+    TruckOwnerManager, SupplierManager, ZoneManager,
+      FactoryManager, RepresentativeManager, BankManager
+)
 
 # ========================
 # Class Instances
@@ -14,6 +17,7 @@ supplier_manager = SupplierManager()
 zone_manager = ZoneManager()
 factory_manager = FactoryManager()
 representative_manager = RepresentativeManager()
+bank_manager = BankManager()
 
 def register_dimension_routes(app):
     @app.route("/dashboard/dimension-tables")
@@ -298,3 +302,50 @@ def register_dimension_routes(app):
         except Exception as e:
             print(f"Error in delete_representative route: {e}")
             return jsonify({'success': False, 'error': str(e)})
+
+    # 🏦 Bank Routes
+    @app.route("/dashboard/dimension-tables/add-bank", methods=['GET', 'POST'])
+    @login_required
+    def add_bank():
+        page = int(request.args.get("page", 1))
+        limit = 10
+        offset = (page - 1) * limit
+        if request.method == 'POST':
+            bank_name = request.form.get('bank_name', '').strip()
+            if not bank_name:
+                flash("❌ أدخل اسم البنك", "error")
+                return redirect(url_for('add_bank'))
+            
+            result = bank_manager.insert_record(bank_name)
+            
+            if result == "inserted":
+                flash("✅ تم إضافة البنك بنجاح", "success")
+            elif result == "exists":
+                flash("⚠️ البنك موجود بالفعل", "warning")
+            else:
+                flash(f"❌ حدث خطأ أثناء إضافة البنك: {result}", "error")
+            return redirect(url_for('add_bank', page=page))
+        
+        banks, total_pages = bank_manager.fetch_all(limit=limit, offset=offset)
+        return render_template("add_bank.html", banks=banks, page=page, total_pages=total_pages)
+
+    @app.route('/update_bank', methods=['POST'])
+    @login_required
+    def update_bank_route():
+        data = request.json
+        original_bank_name = data.get('original_bank_name')
+        new_bank_name = data.get('new_bank_name')
+        if not original_bank_name:
+            return jsonify({'success': False, 'error': 'No original bank name provided'})
+        response = bank_manager.update_record(original_bank_name, {'new_bank_name': new_bank_name})
+        return jsonify(response)
+
+    @app.route('/delete_bank', methods=['POST'])
+    @login_required
+    def delete_bank_route():
+        data = request.json
+        bank_name = data.get('bank_name')
+        if not bank_name:
+            return jsonify({'success': False, 'error': 'No bank name provided'})
+        response = bank_manager.delete_record(bank_name)
+        return jsonify(response)

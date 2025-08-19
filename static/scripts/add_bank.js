@@ -9,13 +9,13 @@ document.addEventListener("DOMContentLoaded", function() {
         if (target.classList.contains("edit-btn")) {
             toggleEditMode(row);
         } else if (target.classList.contains("delete-btn")) {
-            if (confirm(`هل أنت متأكد من حذف البنك '${originalBankName}'؟`)) {
+            if (confirm(`Are you sure you want to delete the bank '${originalBankName}'?`)) {
                 deleteRecord(originalBankName, '/delete_bank');
             }
         } else if (target.classList.contains("save-btn")) {
             const newBankName = row.querySelector('td[data-field="bank_name"] input').value;
             updateRecord({
-                bank_name: originalBankName,
+                original_bank_name: originalBankName,
                 new_bank_name: newBankName,
             }, '/update_bank');
         } else if (target.classList.contains("cancel-btn")) {
@@ -63,7 +63,7 @@ document.addEventListener("DOMContentLoaded", function() {
             if (result.success) {
                 window.location.reload();
             } else {
-                alert('حدث خطأ في التحديث: ' + result.error);
+                alert('An error occurred during the update: ' + result.error);
             }
         })
         .catch(error => console.error('Error:', error));
@@ -80,7 +80,7 @@ document.addEventListener("DOMContentLoaded", function() {
             if (result.success) {
                 window.location.reload();
             } else {
-                alert('حدث خطأ في الحذف: ' + result.error);
+                alert('An error occurred during the deletion: ' + result.error);
             }
         })
         .catch(error => console.error('Error:', error));

@@ -130,7 +130,8 @@ class BaseTable:
             print(f"Error inserting record: {e}")
             if 'conn' in locals() and conn:
                 conn.rollback()
-            return "error"
+                conn.close()
+            return str(e)
             
     def update_record(self, original_name, new_data):
         try:
@@ -182,6 +183,10 @@ class ZoneManager(BaseTable):
 class FactoryManager(BaseTable):
     def __init__(self):
         super().__init__("factories", "factory_id", "factory_name")
+
+class BankManager(BaseTable):
+    def __init__(self):
+        super().__init__("bank_name", "bank_id", "bank_name")
 
 # TruckOwnerManager handles truck owners and their associated trucks
 class TruckOwnerManager(BaseTable):
