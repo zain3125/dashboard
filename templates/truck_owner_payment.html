@@ -11,15 +11,15 @@
     <h1>Truck Owner Payments</h1>
   </div>
   <div class="page-container">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        <div class="flash-messages">
-            {% for category, message in messages %}
-                <div class="flash flash-{{ category }}">{{ message }}</div>
-            {% endfor %}
-        </div>
-    {% endif %}
-    {% endwith %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
 
     <a class="back-link" href="{{ url_for('payment') }}">← Back to Payments</a>
 
@@ -31,16 +31,15 @@
               <label for="date_id">Date</label>
               <input type="date" name="date_id" id="date_id" required>
             </div>
-            <div>
-                <label for="owner_id">Truck Owner</label>
-                <select name="owner_id" id="owner_id" required>
-                    <option value="" disabled selected>Select a truck owner</option>
-                    {% for o in owners %}
-                      <option value="{{ o.id }}">{{ o.truck_owner }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            </div>
+          <div>
+          <label for="owner_id">Truck Owner</label>
+          <select name="owner_id" id="owner_id" required>
+              <option value="" disabled selected>Select a truck owner</option>
+              {% for o in owners %}
+                <option value="{{ o.id }}">{{ o.truck_owner }}</option>
+              {% endfor %}
+          </select>
+          </div>
             <div>
               <label for="amount">Amount</label>
               <input type="number" name="amount" id="amount" required>
@@ -87,7 +86,7 @@
             <tr data-payment-id="{{ row.truck_owner_transaction_id }}">
               <td data-field="date_id">{{ row.date_id }}</td>
               <td data-field="owner_name">{{ row.owner_name }}</td>
-               <td data-field="amount">{{ row.amount }}</td>
+              <td data-field="amount">{{ row.amount }}</td>
               <td data-field="transfer_fees">{{ row.transfer_fees }}</td>
               <td data-field="payment_method">{{ row.payment_method }}</td>
               <td data-field="notes">{{ row.notes }}</td>
