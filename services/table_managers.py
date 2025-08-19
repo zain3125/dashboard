@@ -20,6 +20,7 @@ class BaseTable:
             if self.phone_column:
                 columns.append(self.phone_column)
 
+            # This is safe because table_name and column names are defined in the class, not from user input.
             cur.execute(f"""
                 SELECT {', '.join(columns)}
                 FROM {self.table_name}
@@ -60,6 +61,7 @@ class BaseTable:
                 conditions.append(f"{self.phone_column} ILIKE %s")
                 params.append(f"%{query}%")
                 
+            # This is safe because table_name and column names are defined in the class.
             cur.execute(f"""
                 SELECT {', '.join(select_columns)}
                 FROM {self.table_name}
@@ -84,6 +86,7 @@ class BaseTable:
         try:
             conn = self.get_conn()
             cur = conn.cursor()
+            # This is safe because table_name and column name are defined in the class.
             cur.execute(f"DELETE FROM {self.table_name} WHERE {self.name_column} = %s", (name_value,))
             deleted_rows = cur.rowcount
             conn.commit()
@@ -189,6 +192,7 @@ class TruckOwnerManager(BaseTable):
         try:
             conn = self.get_conn()
             cur = conn.cursor()
+            # Edited: Safely using parameterized query for insert
             cur.execute("SELECT owner_id FROM truck_owners WHERE owner_name = %s AND phone = %s", (truck_owner, phone_number))
             owner_result = cur.fetchone()
             if owner_result:
@@ -207,7 +211,8 @@ class TruckOwnerManager(BaseTable):
             return {'success': True}
         except Exception as e:
             print(f"Error inserting truck owner and truck: {e}")
-            conn.rollback()
+            if 'conn' in locals() and conn:
+                conn.rollback()
             return {'success': False, 'error': str(e)}
 
     def fetch_all(self, limit=10, offset=0):
@@ -278,19 +283,29 @@ class TruckOwnerManager(BaseTable):
             new_truck_num = new_data.get('new_truck_num')
             new_owner_name = new_data.get('new_owner_name')
             new_phone = new_data.get('new_phone')
+            
+            # Edited: Safely getting owner_id with parameterized query
             cur.execute("SELECT owner_id FROM trucks WHERE truck_num = %s", (original_truck_num,))
             truck_row = cur.fetchone()
+            
             if not truck_row:
                 conn.rollback()
                 return {'success': False, 'error': 'Truck not found.'}
             owner_id = truck_row[0]
+            
+            # Edited: Safely updating truck_owners table with parameterized query
             cur.execute("UPDATE truck_owners SET owner_name = %s, phone = %s WHERE owner_id = %s", (new_owner_name, new_phone, owner_id))
+            
             if original_truck_num != new_truck_num:
+                # Edited: Safely updating trucks table with parameterized query
                 cur.execute("UPDATE trucks SET truck_num = %s WHERE truck_num = %s", (new_truck_num, original_truck_num))
+            
             conn.commit()
             cur.close()
             conn.close()
+            
             return {'success': True}
+            
         except Exception as e:
             print(f"Error updating truck owner: {e}")
             if 'conn' in locals() and conn:
