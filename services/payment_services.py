@@ -4,9 +4,16 @@ from db import PG_PARAMS
 
 def get_supplier_payments(search=None):
     query = """
-        SELECT sp.*, s.supplier_name
+        SELECT sp.supplier_transaction_id,
+            sp.date_id,
+            s.supplier_name,
+            sp.amount,
+            sp.transfer_fees,
+            b.bank_name AS payment_method,
+            sp.notes
         FROM suppliers_payment sp
         JOIN suppliers s ON sp.supplier_id = s.supplier_id
+        LEFT JOIN bank_name b ON sp.payment_method = b.bank_id
     """
     params = []
     if search:
@@ -31,9 +38,16 @@ def add_supplier_payment(date_id, supplier_id, amount, transfer_fees, payment_me
 
 def get_truck_owner_payments(search=None):
     query = """
-        SELECT tp.*, t.owner_name
+        SELECT tp.truck_owner_transaction_id,
+            tp.date_id,
+            t.owner_name,
+            tp.amount,
+            tp.transfer_fees,
+            b.bank_name AS payment_method,
+            tp.notes
         FROM truck_owners_payment tp
         JOIN truck_owners t ON tp.owner_id = t.owner_id
+        LEFT JOIN bank_name b ON tp.payment_method = b.bank_id
     """
     params = []
     if search:

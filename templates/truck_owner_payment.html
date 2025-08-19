@@ -31,15 +31,15 @@
               <label for="date_id">Date</label>
               <input type="date" name="date_id" id="date_id" required>
             </div>
-          <div>
-          <label for="owner_id">Truck Owner</label>
-          <select name="owner_id" id="owner_id" required>
-              <option value="" disabled selected>Select a truck owner</option>
-              {% for o in owners %}
-                <option value="{{ o.id }}">{{ o.truck_owner }}</option>
-              {% endfor %}
-          </select>
-          </div>
+            <div>
+              <label for="owner_name">Truck Owner</label>
+              <select name="owner_name" id="owner_name" required>
+                  <option value="" disabled selected>Select a truck owner</option>
+                  {% for o in owners %}
+                    <option value="{{ o.truck_owner }}">{{ o.truck_owner }}</option>
+                  {% endfor %}
+              </select>
+            </div>
             <div>
               <label for="amount">Amount</label>
               <input type="number" name="amount" id="amount" required>
@@ -49,8 +49,12 @@
               <input type="number" name="transfer_fees" id="transfer_fees">
             </div>
             <div>
-              <label for="payment_method">Payment Method</label>
-              <input type="text" name="payment_method" id="payment_method">
+              <select name="payment_method" id="payment_method" required>
+                <option value="" disabled selected>Select a payment method</option>
+                {% for b in banks %}
+                  <option value="{{ b.bank_id }}">{{ b.bank_name }}</option>
+                {% endfor %}
+              </select>
             </div>
             <div>
               <label for="notes">Notes</label>

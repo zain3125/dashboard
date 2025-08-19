@@ -33,10 +33,10 @@
             </div>
           <div>
           <label for="supplier_id">Supplier</label>
-          <select name="supplier_id" id="supplier_id" required>
+          <select name="supplier_name" id="supplier_name" required>
               <option value="" disabled selected>Select a supplier</option>
               {% for s in suppliers %}
-                <option value="{{ s.id }}">{{ s.supplier_name }}</option>
+                  <option value="{{ s.supplier_name }}">{{ s.supplier_name }}</option>
               {% endfor %}
           </select>
           </div>
@@ -50,7 +50,12 @@
             </div>
             <div>
               <label for="payment_method">Payment Method</label>
-              <input type="text" name="payment_method" id="payment_method">
+              <select name="payment_method" id="payment_method" required>
+                  <option value="" disabled selected>Select a payment method</option>
+                  {% for b in banks %}
+                      <option value="{{ b.bank_id }}">{{ b.bank_name }}</option>
+                  {% endfor %}
+              </select>
             </div>
             <div>
               <label for="notes">Notes</label>
