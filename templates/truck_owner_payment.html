@@ -33,12 +33,12 @@
             </div>
             <div>
               <label for="owner_name">Truck Owner</label>
-              <select name="owner_name" id="owner_name" required>
-                  <option value="" disabled selected>Select a truck owner</option>
-                  {% for o in owners %}
-                    <option value="{{ o.truck_owner }}">{{ o.truck_owner }}</option>
-                  {% endfor %}
-              </select>
+            <select name="owner_name" id="owner_name" required>
+              <option value="" disabled selected>Select a truck owner</option>
+              {% for o in owners %}
+                  <option value="{{ o.truck_owner }}">{{ o.truck_owner }}</option>
+              {% endfor %}
+            </select>
             </div>
             <div>
               <label for="amount">Amount</label>
@@ -49,10 +49,11 @@
               <input type="number" name="transfer_fees" id="transfer_fees">
             </div>
             <div>
+              <label for="payment_method">Payment Method</label>
               <select name="payment_method" id="payment_method" required>
                 <option value="" disabled selected>Select a payment method</option>
                 {% for b in banks %}
-                  <option value="{{ b.bank_id }}">{{ b.bank_name }}</option>
+                    <option value="{{ b.bank_id }}">{{ b.bank_name }}</option>
                 {% endfor %}
               </select>
             </div>
@@ -104,6 +105,10 @@
         </table>
     </div>
   </div>
+  <script>
+      const ownersList = {{ owners_json|safe }};
+      const banksList = {{ banks_json|safe }};
+  </script>
   <script src="{{ url_for('static', filename='scripts/truck_owner_payment.js') }}"></script>
 </body>
 </html>

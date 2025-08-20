@@ -20,14 +20,12 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     function toggleEditMode(row) {
-        // منع تفعيل التعديل على أكثر من صف
         if (document.querySelector("tr.edit-mode") && !row.classList.contains("edit-mode")) {
-            alert("أنهاء تعديل الصف الحالي أولاً");
+            alert("أنهِ تعديل الصف الحالي أولاً");
             return;
         }
 
         if (row.classList.contains("edit-mode")) {
-            // حفظ التعديلات
             const updatedData = {};
             row.querySelectorAll("td[data-field]").forEach(cell => {
                 const input = cell.querySelector("input, select");
@@ -36,18 +34,29 @@ document.addEventListener("DOMContentLoaded", function () {
             updatedData.id = row.dataset.paymentId;
             updateRecord(updatedData);
         } else {
-            // تفعيل وضع التعديل
             row.classList.add("edit-mode");
             row.querySelectorAll("td[data-field]").forEach(cell => {
                 const originalValue = cell.textContent.trim();
                 const fieldName = cell.dataset.field;
 
                 if (fieldName === "owner_name") {
-                    // هنا يمكن إضافة قائمة منسدلة لمالكي الشاحنات إذا لزم الأمر
-                    // حاليًا، يتم التعامل معها كنص فقط
-                    cell.innerHTML = `<input type="text" value="${originalValue}" data-original-value="${originalValue}" disabled>`;
-                } else {
-                    cell.innerHTML = `<input type="text" value="${originalValue}" data-original-value="${originalValue}">`;
+                    let options = ownersList.map(o =>
+                        `<option value="${o.truck_owner}" ${originalValue === o.truck_owner ? "selected" : ""}>
+                            ${o.truck_owner}
+                        </option>`
+                    ).join("");
+                    cell.innerHTML = `<select name="owner_name" data-original-value="${originalValue}">${options}</select>`;
+                }
+                else if (fieldName === "payment_method") {
+                    let options = banksList.map(b =>
+                        `<option value="${b.bank_id}" ${originalValue === b.bank_name ? "selected" : ""}>
+                            ${b.bank_name}
+                        </option>`
+                    ).join("");
+                    cell.innerHTML = `<select name="payment_method" data-original-value="${originalValue}">${options}</select>`;
+                }
+                else {
+                    cell.innerHTML = `<input type="text" value="${originalValue}" data-original-value="${originalValue}"/>`;
                 }
             });
             row.querySelector(".actions-cell").innerHTML = `
@@ -60,8 +69,13 @@ document.addEventListener("DOMContentLoaded", function () {
     function cancelEditMode(row) {
         row.classList.remove("edit-mode");
         row.querySelectorAll("td[data-field]").forEach(cell => {
-            const originalValue = cell.querySelector("input").dataset.originalValue;
-            cell.textContent = originalValue;
+            const selectOrInput = cell.querySelector("input, select");
+            if (selectOrInput) {
+                const originalValue = selectOrInput.dataset.originalValue;
+                cell.textContent = originalValue;
+            } else {
+                cell.textContent = cell.textContent.trim();
+            }
         });
         row.querySelector(".actions-cell").innerHTML = `
             <button type="button" class="edit-btn">Edit</button>

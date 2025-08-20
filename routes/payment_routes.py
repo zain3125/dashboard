@@ -1,4 +1,5 @@
 from flask import render_template, request, redirect, url_for, flash, jsonify
+import json
 from services.payment_services import (
     get_supplier_payments, add_supplier_payment,
     get_truck_owner_payments, add_truck_owner_payment,
@@ -78,7 +79,14 @@ def register_payment_routes(app):
         cur.close()
         conn.close()
 
-        return render_template("supplier_payment.html", payments=payments, suppliers=suppliers, banks=banks)
+        return render_template(
+            "supplier_payment.html",
+            payments=payments,
+            suppliers=suppliers,
+            banks=banks,
+            suppliers_json=json.dumps(suppliers),  # ✅ dicts جاهزة
+            banks_json=json.dumps(banks)           # ✅ dicts جاهزة
+        )
 
     # دفع لمالكي الشاحنات
     @app.route("/payment/truck-owner", methods=["GET", "POST"])
@@ -132,7 +140,6 @@ def register_payment_routes(app):
         payments = get_truck_owner_payments(request.args.get("query"))
         # جلب قائمة الملاك
         owners, _ = truck_owner_manager.fetch_all(limit=1000, offset=0)
-
         # 👇 جلب قائمة البنوك
         conn = psycopg2.connect(**PG_PARAMS)
         cur = conn.cursor()
@@ -141,25 +148,36 @@ def register_payment_routes(app):
         cur.close()
         conn.close()
 
-        return render_template("truck_owner_payment.html", payments=payments, owners=owners, banks=banks)
+        return render_template(
+            "truck_owner_payment.html",
+            payments=payments,
+            owners=owners,
+            banks=banks,
+            owners_json=json.dumps(owners),
+            banks_json=json.dumps(banks)
+        )
 
     # تحديث دفعة مورد
     @app.route("/update_supplier_payment", methods=["POST"])
     def update_supplier_payment_route():
         data = request.get_json()
+        print("Received update request with data:", data)
         if not data:
             return jsonify({"success": False, "error": "Invalid JSON"}), 400
 
         try:
             update_supplier_payment(
                 data["id"],
-                data["amount"],
+                data.get("amount"),
                 data.get("transfer_fees"),
                 data.get("payment_method"),
-                data.get("notes")
+                data.get("notes"),
+                data.get("supplier_name")  # 👈 أضف هذا السطر
             )
+            print("Supplier payment updated successfully.")
             return jsonify({"success": True})
         except Exception as e:
+            print("Error updating supplier payment:", str(e))
             return jsonify({"success": False, "error": str(e)}), 500
 
     # حذف دفعة مورد
@@ -185,10 +203,11 @@ def register_payment_routes(app):
         try:
             update_truck_owner_payment(
                 data["id"],
-                data["amount"],
+                data.get("amount"),
                 data.get("transfer_fees"),
                 data.get("payment_method"),
-                data.get("notes")
+                data.get("notes"),
+                data.get("owner_name")
             )
             return jsonify({"success": True})
         except Exception as e:

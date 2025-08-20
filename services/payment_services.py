@@ -1,6 +1,7 @@
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from db import PG_PARAMS
+from services.main_data_manager import get_id_by_name
 
 def get_supplier_payments(search=None):
     query = """
@@ -71,18 +72,37 @@ def add_truck_owner_payment(date_id, owner_id, amount, transfer_fees, payment_me
             cur.execute(query, (date_id, owner_id, amount, transfer_fees, payment_method, notes))
             conn.commit()
 
-def update_supplier_payment(supplier_transaction_id, amount, transfer_fees, payment_method, notes):
-    query = """
-        UPDATE suppliers_payment
-        SET amount = %s,
-            transfer_fees = %s,
-            payment_method = %s,
-            notes = %s
-        WHERE supplier_transaction_id = %s
-    """
+def update_supplier_payment(
+    supplier_transaction_id,
+    new_amount,
+    new_transfer_fees,
+    new_payment_method,
+    new_notes,
+    new_supplier_name
+):
     with psycopg2.connect(**PG_PARAMS) as conn:
         with conn.cursor() as cur:
-            cur.execute(query, (amount, transfer_fees, payment_method, notes, supplier_transaction_id))
+            supplier_id = get_id_by_name(cur, "suppliers", "supplier_id", "supplier_name", new_supplier_name)
+            if not supplier_id:
+                raise ValueError(f"Supplier with name '{new_supplier_name}' not found.")
+
+            query = """
+                UPDATE suppliers_payment  
+                SET supplier_id = %s,
+                    amount = %s,
+                    transfer_fees = %s,
+                    payment_method = %s,
+                    notes = %s
+                WHERE supplier_transaction_id = %s;
+            """
+            cur.execute(query, (
+                supplier_id,  
+                new_amount,
+                new_transfer_fees,
+                new_payment_method,
+                new_notes,
+                supplier_transaction_id
+            ))
             conn.commit()
 
 def delete_supplier_payment(supplier_transaction_id):
@@ -93,18 +113,37 @@ def delete_supplier_payment(supplier_transaction_id):
             conn.commit()
 
 
-def update_truck_owner_payment(truck_owner_transaction_id, amount, transfer_fees, payment_method, notes):
-    query = """
-        UPDATE truck_owners_payment
-        SET amount = %s,
-            transfer_fees = %s,
-            payment_method = %s,
-            notes = %s
-        WHERE truck_owner_transaction_id = %s
-    """
+def update_truck_owner_payment(
+    truck_owner_transaction_id, 
+    new_amount, 
+    new_transfer_fees, 
+    new_payment_method, 
+    new_notes, 
+    new_owner_name
+):
     with psycopg2.connect(**PG_PARAMS) as conn:
         with conn.cursor() as cur:
-            cur.execute(query, (amount, transfer_fees, payment_method, notes, truck_owner_transaction_id))
+            owner_id = get_id_by_name(cur, "truck_owners", "owner_id", "owner_name", new_owner_name)
+            if not owner_id:
+                raise ValueError(f"Truck owner with name '{new_owner_name}' not found.")
+
+            query = """
+                UPDATE truck_owners_payment
+                SET owner_id = %s,
+                    amount = %s,
+                    transfer_fees = %s,
+                    payment_method = %s,
+                    notes = %s
+                WHERE truck_owner_transaction_id = %s;
+            """
+            cur.execute(query, (
+                owner_id,
+                new_amount,
+                new_transfer_fees,
+                new_payment_method,
+                new_notes,
+                truck_owner_transaction_id
+            ))
             conn.commit()
 
 def delete_truck_owner_payment(truck_owner_transaction_id):

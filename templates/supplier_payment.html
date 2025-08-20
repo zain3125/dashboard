@@ -105,6 +105,10 @@
         </table>
     </div>
   </div>
+  <script>
+      const suppliersList = {{ suppliers_json|safe }};
+      const banksList = {{ banks_json|safe }};
+  </script>
   <script src="{{ url_for('static', filename='scripts/supplier_payment.js') }}"></script>
 </body>
 </html>

@@ -35,13 +35,28 @@ document.addEventListener("DOMContentLoaded", function () {
                 const fieldName = cell.dataset.field;
 
                 if (fieldName === "supplier_name") {
-                    // هنا يمكن إضافة قائمة منسدلة للموردين إذا لزم الأمر
-                    // حاليًا، يتم التعامل معها كنص فقط
-                    cell.innerHTML = `<input type="text" value="${originalValue}" data-original-value="${originalValue}" disabled>`;
-                } else {
+                    let options = suppliersList.map(s =>
+                        `<option value="${s.supplier_name}" ${originalValue === s.supplier_name ? "selected" : ""}>
+                            ${s.supplier_name}
+                        </option>`
+                    ).join("");
+                    cell.innerHTML = `<select name="supplier_name" data-original-value="${originalValue}">${options}</select>`;
+                } else if (fieldName === "payment_method") {
+                    let options = banksList.map(b =>
+                        `<option value="${b.bank_id}" ${originalValue === b.bank_name ? "selected" : ""}>
+                            ${b.bank_name}
+                        </option>`
+                    ).join("");
+                    cell.innerHTML = `<select name="payment_method" data-original-value="${originalValue}">${options}</select>`;
+                } else if (fieldName === "date_id") {
+                    cell.innerHTML = `<input type="date" value="${originalValue.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3')}" data-original-value="${originalValue}">`;
+                } else if (fieldName === "notes") {
                     cell.innerHTML = `<input type="text" value="${originalValue}" data-original-value="${originalValue}">`;
+                } else {
+                    cell.innerHTML = `<input type="number" value="${originalValue}" data-original-value="${originalValue}">`;
                 }
             });
+
             row.querySelector(".actions-cell").innerHTML = `
                 <button type="button" class="save-btn">💾</button>
                 <button type="button" class="cancel-btn">✖</button>
@@ -52,8 +67,11 @@ document.addEventListener("DOMContentLoaded", function () {
     function cancelEditMode(row) {
         row.classList.remove("edit-mode");
         row.querySelectorAll("td[data-field]").forEach(cell => {
-            const originalValue = cell.querySelector("input").dataset.originalValue;
-            cell.textContent = originalValue;
+            const selectOrInput = cell.querySelector("input, select");
+            if (selectOrInput) {
+                const originalValue = selectOrInput.dataset.originalValue;
+                cell.textContent = originalValue;
+            }
         });
         row.querySelector(".actions-cell").innerHTML = `
             <button type="button" class="edit-btn">Edit</button>
@@ -62,20 +80,25 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function updateRecord(data) {
+        console.log("Updating record with data:", data);
+
         fetch('/update_supplier_payment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         })
-            .then(res => res.json())
-            .then(result => {
-                if (result.success) {
-                    window.location.reload();
-                } else {
-                    alert("خطأ في التحديث: " + result.error);
-                }
-            })
-            .catch(err => console.error(err));
+        .then(res => res.json())
+        .then(result => {
+            console.log("Update response:", result);
+            if (result.success) {
+                window.location.reload();
+            } else {
+                alert("خطأ في التحديث: " + result.error);
+            }
+        })
+        .catch(err => {
+            console.error("Fetch error:", err);
+        });
     }
 
     function deleteRecord(id) {
